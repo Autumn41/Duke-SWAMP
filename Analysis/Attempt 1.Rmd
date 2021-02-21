@@ -26,10 +26,6 @@ fix_day = Vectorize(function(day) {
   return(day)
 })
 
-#Theme for Graphs
-mytheme <- theme_classic(base_size = 14) +
-  theme(axis.text = element_text(color = "black"), 
-        legend.position = "top") #alternative: legend.position + legend.justification
 ```
 
 Upload Data
@@ -161,377 +157,17 @@ Question 1. How does SWAMP water quality compare to EPA standards?
 #Outflow sites were used to compare to EPA standards
 #outflow sites: WT2, WT3, WT5, DS1
 
-
-######   Graphs   ######
-
 ###   Nitrogen   ###
-
-#Table 1: Total Nitrogen for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`Total N (ug/L)`), colour = Site)) +
-  geom_abline(aes(intercept=log(800), slope=0, lty='EPA Standard of total nitrogen for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Nitrogen (ug/L)") +
-  ggtitle("Total Nitrogen for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 2: Ammonium for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`NH4-N (ug/L)`) , colour = Site)) +
-  geom_abline(aes(intercept=log(20), slope=0, lty='EPA Standard of ammonium for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Ammonium (ug/L)") +
-  ggtitle("Ammonium for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 3: Nitrous Oxide for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`NOX`), colour = Site)) +
-  geom_abline(aes(intercept=log(345), slope=0, lty='EPA Standard of nitrous oxide for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Nitrous Oxide (ug/L)") +
-  ggtitle("Nitrous Oxide for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 4: Total Nitrogen for Phase 2 outflow SWAMP Site WT5 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT5")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`Total N (ug/L)`), colour = Site)) +
-  geom_abline(aes(intercept=log(800), slope=0, lty='EPA Standard of total nitrogen for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Nitrogen (ug/L)") +
-  ggtitle("Total Nitrogen for Phase 2 Outflow SWAMP Site WT5 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 5: Ammonium for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`NH4-N (ug/L)`), colour = Site)) +
-  geom_abline(aes(intercept=log(20), slope=0, lty='EPA Standard of ammonium for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Ammonium (ug/L)") +
-  ggtitle("Ammonium for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 6: Nitrous Oxides for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`NOX`), colour = Site)) +
-  geom_abline(aes(intercept=log(345), slope=0, lty='EPA Standard of nitrous oxide for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Nitrous Oxide (ug/L)") +
-  ggtitle("Nitrous Oxide for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 7: Total Nitrogen for Phase 3 outflow SWAMP Site WT2 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT2")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`Total N (ug/L)`), colour = Site)) +
-  geom_abline(aes(intercept=log(800), slope=0, lty='EPA Standard of total nitrogen for Ecoregion IX'), col = "black") +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Nitrogen (ug/L)") +
-  ggtitle("Total Nitrogen for Phase 2 Outflow SWAMP Site WT2 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 8: Ammonium for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`NH4-N (ug/L)`), colour = Site)) +
-  geom_abline(aes(intercept=log(20), slope=0, lty='EPA Standard of ammonium for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Ammonium (ug/L)") +
-  ggtitle("Ammonium for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 9: Nitrous Oxide for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`NOX`), colour = Site)) +
-  geom_abline(aes(intercept=log(345), slope=0, lty='EPA Standard of nitrous oxide for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Nitrous Oxide (ug/L)") +
-  ggtitle("Nitrous Oxide for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
 
 ###   Phosphorus   ###
 
-#Table 10: Total Phosphorus for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`UTP`), colour = Site)) +
-  geom_abline(aes(intercept=log(30), slope=0, lty='EPA Standard of total phosphorus for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Phosphorus (ug/L)") +
-  ggtitle("Total Phosphorus for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 11: Total Phosphrous for Phase 2 outflow SWAMP Site WT5 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT5")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`UTP`), colour = Site)) +
-  geom_abline(aes(intercept=log(30), slope=0, lty='EPA Standard of total phosphorus for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Phosphorus (ug/L)") +
-  ggtitle("Total Phosphorus for Phase 2 Outflow SWAMP Site WT5 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 12: Total Phosphorus for Phase 3 outflow SWAMP Site WT2 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT2")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`UTP`), colour = Site)) +
-  geom_abline(aes(intercept=log(30), slope=0, lty='EPA Standard of total phosphorus for Ecoregion IX'), col = "black") +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Phosphorus (ug/L)") +
-  ggtitle("Total Phosphorus for Phase 2 Outflow SWAMP Site WT2 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
 ###   Fecal Coliform   ###
-
-#Table 13: Fecal Coliform for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`FC`), colour = Site)) +
-  geom_abline(aes(intercept=log(200), slope=0, lty='EPA Standard of fecal coliform for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Fecal Coliform (colonies/100 mL)") +
-  ggtitle("Fecal Coliform for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 14: Fecal Coliform for Phase 2 outflow SWAMP Site WT5 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT5")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`FC`), colour = Site)) +
-  geom_abline(aes(intercept=log(200), slope=0, lty='EPA Standard of fecal coliform for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Fecal Coliform (colonies/100 mL)") +
-  ggtitle("Fecal Coliform for Phase 2 Outflow SWAMP Site WT5 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 15: Fecal Coliform for Phase 3 outflow SWAMP Site WT2 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT2")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`FC`), colour = Site)) +
-  geom_abline(aes(intercept=log(200), slope=0, lty='EPA Standard of fecal coliform for Ecoregion IX'), col = "black") +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Fecal Coliform (colonies/100 mL)") +
-  ggtitle("Fecal Coliform for Phase 2 Outflow SWAMP Site WT2 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
 
 ###   Temperature   ###
 
-#Table 16: Temperature for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`Temp C`), colour = Site)) +
-  geom_abline(aes(intercept=log(32), slope=0, lty='EPA Standard of temperature for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Temperature (C)") +
-  ggtitle("Temperature for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 17: Temperature for Phase 2 outflow SWAMP Site WT5 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT5")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`Temp C`), colour = Site)) +
-  geom_abline(aes(intercept=log(32), slope=0, lty='EPA Standard of temperature for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Temperature (C)") +
-  ggtitle("Temperature for Phase 2 Outflow SWAMP Site WT5 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 18: Temperature for Phase 3 outflow SWAMP Site WT2 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT2")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`Temp C`), colour = Site)) +
-  geom_abline(aes(intercept=log(32), slope=0, lty='EPA Standard of temperature for Ecoregion IX'), col = "black") +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Temperature (C)") +
-  ggtitle("Temperature for Phase 2 Outflow SWAMP Site WT2 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
 ###   pH   ###
 
-#Table 19: pH for Phase 2 outflow SWAMP Site WT3
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = (`pH`), colour = Site)) +
-  geom_abline(aes(intercept= (6), slope=0, lty='EPA Standard of pH for Ecoregion IX')) +
-    geom_abline(aes(intercept= (9), slope=0)) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("pH") +
-  ggtitle("pH for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 20: pH for Phase 2 outflow SWAMP Site WT5
-SWAMP_Data %>%
-  filter(Site %in% c("WT5")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = (`pH`), colour = Site)) +
-  geom_abline(aes(intercept=6, slope=0, lty='EPA Standard of pH for Ecoregion IX')) +
-      geom_abline(aes(intercept= (9), slope=0)) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("pH") +
-  ggtitle("pH for Phase 2 Outflow SWAMP Site WT5 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 21: pH for Phase 3 outflow SWAMP Site WT2
-SWAMP_Data %>%
-  filter(Site %in% c("WT2")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = (`pH`), colour = Site)) +
-  geom_abline(aes(intercept=log(6), slope=0, lty='EPA Standard of pH for Ecoregion IX'), col = "black") +
-      geom_abline(aes(intercept= (9), slope=0)) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("pH") +
-  ggtitle("pH for Phase 2 Outflow SWAMP Site WT2 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
 ###   Sediment   ###
-
-#Table 22: Total Suspended Solids for Phase 2 outflow SWAMP Site WT3 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT3")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`TSS (mg/L)`), colour = Site)) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Suspended Solids (mg/L)") +
-  ggtitle("Total Suspended Solids for Phase 2 Outflow SWAMP Site WT3 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 23: Total Suspended Solids for Phase 2 outflow SWAMP Site WT5 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT5")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`TSS (mg/L)`), colour = Site)) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Suspended Solids (mg/L)") +
-  ggtitle("Total Suspended Solids for Phase 2 Outflow SWAMP Site WT5 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
-
-#Table 24: Total Suspended Solids for Phase 3 outflow SWAMP Site WT2 on a log scale
-SWAMP_Data %>%
-  filter(Site %in% c("WT2")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`TSS (mg/L)`), colour = Site)) +
-  geom_smooth(se=TRUE) +
-    xlab("Year") +
-  ylab("Total Suspended Solids (mg/L)") +
-  ggtitle("Total Suspended Solids for Phase 2 Outflow SWAMP Site WT2 on a log scale" ) +
-  stat_summary(fun = mean, geom = "line", lwd = 1, aes(group = 1, lty = 'Mean'), 
-               col = "cornsilk4", size = 3) +
-  mytheme 
 
 ```
 
@@ -575,6 +211,18 @@ Question 3. How much is Duke Garden effecting SWAMP's water quality?
 
 Question 4. What is the future of SWAMP water treatment?
 ```{r}
+
+###   Nitrogen   ###
+
+###   Phosphorus   ###
+
+###   Fecal Coliform   ###
+
+###   Temperature   ###
+
+###   pH   ###
+
+###   Sediment   ###
 
 ```
 
