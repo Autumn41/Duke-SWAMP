@@ -33,6 +33,8 @@ TotalSuspendedSolids <- read_excel(here("Data/TotalSuspendedSolids.xlsx"))
 YSI <- read_excel(here("Data/YSI.xlsx"))
 FecalColiform <- read_excel(here("Data/FecalColiform.xlsx"))
 ```
+
+
 ###    About SWAMP    ###
 
 SWAMP Information:
@@ -82,10 +84,10 @@ Site Details:
 
 Variables:
 - Nitrogen (NOx, TN, NH)
-  (TN) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont): 800 ug/L 
-  (NH) EPA standard for NH: 20 ug/L
-  (NOx) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont: 345 ug/L
-- Phosphorus (TP)
+  (TN - Total Nitrogen) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont): 800 ug/L 
+  (NH - Ammonium) EPA standard for NH: 20 ug/L
+  (NOx - Nitrous Oxide) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont: 345 ug/L
+- Phosphorus (TP - Total Phosphorus)
     EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont): 30 ug/L
 - Fecal Coliform (FC)
     State of NC water quality criteria: 200 colonies/100 mL
@@ -123,6 +125,19 @@ SWAMP_YSI<- YSI %>%
   filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
 
 SWAMP_Data<- bind_rows(SWAMP_Nitrogen, SWAMP_Phosphorus, SWAMP_FecalColiform, SWAMP_TotalSuspendedSolids, SWAMP_YSI)
+
+SWAMP_means <- SWAMP_Data %>% 
+  group_by(`Month`, `Day`, `Year`, `Site`) %>% 
+summarise(Mean_TN = mean(`Total N (ug/L)`),
+          Mean_NH = mean(`NH4-N (ug/L)`),
+          Mean_NOX = mean(`NOX`),
+          Mean_TP = mean(`UTP`),
+          Mean_FC = mean(`FC`),
+          Mean_TSS = mean(`TSS (mg/L)`),
+          Mean_Temp = mean(`Temp C`),
+          )
+
+ALL_SWAMP_data<- bind_rows(SWAMP_Data, SWAMP_means)
 
 #Combine and Isolate Duke Garden Data
 DukeGarden_Nitrogen<- Nitrogen %>%
@@ -180,6 +195,19 @@ Question 2. How effective is SWAMP in water quality treatment?
 #Provide mean, median, and yearly average
 
 ###   Nitrogen   ###
+ALL_SWAMP_data %>%
+  filter(Site %in% c("WT5", "WT1")) %>%
+  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+ggplot(aes(x = date, y = log(`Total N (ug/L)`), colour = Site)) +
+  geom_abline(aes(intercept=log(800), slope=0, lty='EPA Standard of total nitrogen for Ecoregion IX')) +
+  scale_linetype(name = NULL) +
+  geom_smooth(se=TRUE, method = "loess", span=0.2) +
+    xlab("Year") +
+  ylab("Total Nitrogen (ug/L)") +
+  ggtitle("Total Nitrogen for..." ) +
+geom_smooth(aes(x=date, y=log(`Mean_TN`), colour = Site), method = "loess", span=0.2) +
+  mytheme 
+
 
 
 ###   Phosphorus   ###
