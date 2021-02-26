@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Packages needed
 ```{r}
 if(!require(pacman)) install.packages("pacman")
-pacman::p_load(ggpubr, ggplot2, readxl, dplyr, lubridate, here)
+pacman::p_load(ggpubr, ggplot2, readxl, dplyr, lubridate, here, pkgcond)
 ```
 
 Functions Used
@@ -23,6 +23,15 @@ fix_day = Vectorize(function(day) {
   if (day %in% 1:9) return(paste0("0", day))
   return(day)
 })
+
+#Graph Theme
+mytheme <- theme_classic(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "top") #alternative: legend.position + legend.justification
+
+#Suppress Messages
+suppress_messages(expr)
+
 ```
 
 Upload Data
@@ -138,6 +147,7 @@ summarise(Mean_TN = mean(`Total N (ug/L)`),
           )
 
 ALL_SWAMP_data<- bind_rows(SWAMP_Data, SWAMP_means)
+ALL_SWAMP_data$pH<- as.numeric(ALL_SWAMP_data$pH)
 
 #Combine and Isolate Duke Garden Data
 DukeGarden_Nitrogen<- Nitrogen %>%
@@ -172,17 +182,31 @@ Question 1. How does SWAMP water quality compare to EPA standards?
 
 ###   Nitrogen   ###
 
+#Table 1. Total Nitrogen for WT2, WT3, WT5, DS1
 
+#Table 2. Ammonium for WT2, WT3, WT5, DS1
+
+#Table 3. Nitrous Oxide for WT2, WT3, WT5, DS1
 
 ###   Phosphorus   ###
 
+
+
 ###   Fecal Coliform   ###
+
+
 
 ###   Temperature   ###
 
+
+
 ###   pH   ###
 
+
+
 ###   Sediment   ###
+
+
 
 ```
 
@@ -191,24 +215,11 @@ Question 2. How effective is SWAMP in water quality treatment?
 #Inflow and Outflow sites compared
 #WT1 is a control site, considered pre-treatment to SWAMP
 #WT1 compared to BR5
-#WT1 compared to outflow points WT2, WT3, WT5, DS1
+#WT1 compared to outflow points WT2, WT3, WT5
 #Provide mean, median, and yearly average
 
 ###   Nitrogen   ###
-ALL_SWAMP_data %>%
-  filter(Site %in% c("WT5", "WT1")) %>%
-  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-ggplot(aes(x = date, y = log(`Total N (ug/L)`), colour = Site)) +
-  geom_abline(aes(intercept=log(800), slope=0, lty='EPA Standard of total nitrogen for Ecoregion IX')) +
-  scale_linetype(name = NULL) +
-  geom_smooth(se=TRUE, method = "loess", span=0.2) +
-    xlab("Year") +
-  ylab("Total Nitrogen (ug/L)") +
-  ggtitle("Total Nitrogen for..." ) +
-geom_smooth(aes(x=date, y=log(`Mean_TN`), colour = Site), method = "loess", span=0.2) +
-  mytheme 
-
-
+  
 
 ###   Phosphorus   ###
 
