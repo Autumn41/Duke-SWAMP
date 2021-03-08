@@ -257,7 +257,7 @@ ggplot(aes(x = date, y = log(`Total N (ug/L)`))) +
       ylab("Total Nitrogen (ug/L)") +
       ggtitle("Total Nitrogen for SWAMP Outflow" ) +
   mytheme +
-  facet_wrap(~Site, nrow = 3) +
+  facet_wrap(~Site) +
 stat_summary(fun = mean, aes(shape=""), geom = "line", color = "Red", alpha = 0.4, show.legend = TRUE) +
       scale_shape_manual("Mean", values="Mean") +
   guides(shape = guide_legend(override.aes = list(linetype = 1, size = 1, alpha = 0.4, color="red"))) +
@@ -275,7 +275,7 @@ ggplot(aes(x = date, y = log(`NH4-N (ug/L)`))) +
       ylab("Ammonium (ug/L)") +
       ggtitle("Ammonium for SWAMP Outflow" ) +
   mytheme +
-  facet_wrap(~Site, nrow = 3) +
+  facet_wrap(~Site) +
 stat_summary(fun = mean, aes(shape=""), geom = "line", color = "Red", alpha = 0.4, show.legend = TRUE) +
       scale_shape_manual("Mean", values="Mean") +
   guides(shape = guide_legend(override.aes = list(linetype = 1, size = 1, alpha = 0.4, color="red"))) +
@@ -358,7 +358,7 @@ ggplot(aes(x = date, y = log(`UTP`))) +
       ylab("Total Phosphorus (ug/L)") +
       ggtitle("Total Phosphorus for SWAMP Outflow" ) +
   mytheme +
-  facet_wrap(~Site, nrow = 3) +
+  facet_wrap(~Site) +
 stat_summary(fun = mean, aes(shape=""), geom = "line", color = "Red", alpha = 0.4, show.legend = TRUE) +
       scale_shape_manual("Mean", values="Mean") +
   guides(shape = guide_legend(override.aes = list(linetype = 1, size = 1, alpha = 0.4, color="red"))) +
@@ -424,7 +424,7 @@ ggplot(aes(x = date, y = log(`FC`))) +
       ylab("Fecal Coliform (colonies/100 mL)") +
       ggtitle("Fecal Coliform for SWAMP Outflow" ) +
   mytheme +
-  facet_wrap(~Site, nrow = 3) +
+  facet_wrap(~Site) +
 stat_summary(fun = mean, aes(shape=""), geom = "line", color = "Red", alpha = 0.4, show.legend = TRUE) +
       scale_shape_manual("Mean", values="Mean") +
   guides(shape = guide_legend(override.aes = list(linetype = 1, size = 1, alpha = 0.4, color="red"))) +
@@ -490,7 +490,7 @@ ggplot(aes(x = date, y = log(`Temp C`))) +
       ylab("Temperature (Celcius)") +
       ggtitle("Temperature for SWAMP Outflow" ) +
   mytheme +
-  facet_wrap(~Site, nrow = 3) +
+  facet_wrap(~Site) +
 stat_summary(fun = mean, aes(shape=""), geom = "line", color = "Red", alpha = 0.4, show.legend = TRUE) +
       scale_shape_manual("Mean", values="Mean") +
   guides(shape = guide_legend(override.aes = list(linetype = 1, size = 1, alpha = 0.4, color="red"))) +
@@ -560,7 +560,7 @@ ggplot(aes(x = date, y = (`pH`))) +
       ylab("pH") +
       ggtitle("pH for SWAMP Outflow" ) +
   mytheme +
-  facet_wrap(~Site, nrow = 3) +
+  facet_wrap(~Site) +
 stat_summary(fun = mean, aes(shape=""), geom = "line", color = "Red", alpha = 0.4, show.legend = TRUE) +
       scale_shape_manual("Mean", values="Mean") +
   guides(shape = guide_legend(override.aes = list(linetype = 1, size = 1, alpha = 0.4, color="red"))) +
@@ -621,11 +621,12 @@ ggplot(aes(x = date, y = log(`TSS (mg/L)`))) +
       ylab("Total Suspended Solids (mg/L)") +
       ggtitle("Total Suspended Solids for SWAMP Outflow" ) +
   mytheme +
-  facet_wrap(~Site, nrow = 3) +
+  facet_wrap(~Site) +
 stat_summary(fun = mean, aes(shape=""), geom = "line", color = "Red", alpha = 0.4, show.legend = TRUE) +
       scale_shape_manual("Mean", values="Mean") +
   guides(shape = guide_legend(override.aes = list(linetype = 1, size = 1, alpha = 0.4, color="red")))
 
+TSS_outflow
 
 ## Save plots ##
 saveRDS(TN_outflow, file ="../Graphs/TN_outflow.rds")
@@ -667,6 +668,8 @@ geom_hline(aes(yintercept=log(800), color="EPA Standard of Total Nitrogen for Ec
       scale_color_manual("", values = c("black")) +
       guides(color = guide_legend(override.aes = list(linetype = 2, size = 1, alpha = 1)))
 
+print(TN_compare_inflow.to.outflow1)
+
 TN_compare_inflow.to.outflow2<-  ALL_SWAMP_data %>%
   filter(Site %in% c("WT1", "WT2" , "WT3", "WT5", "BR5", "DS1")) %>%
   mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
@@ -682,6 +685,7 @@ ggplot(aes(x = date, y = log(`Total N (ug/L)`), colour = Site)) +
 geom_hline(aes(yintercept=log(800), shape="EPA Standard of Total Nitrogen for Ecoregion IX"), lty=2, show.legend = TRUE) +
       scale_shape_manual("", values = "EPA Standard of Total Nitrogen for Ecoregion IX") +
       guides(shape = guide_legend(override.aes = list(linetype = 2, size = 1, alpha = 1)))
+print(TN_compare_inflow.to.outflow2)
 
 #save graphs
 saveRDS(TN_compare_inflow.to.outflow1, file ="../Graphs/TN_compare_inflow.to.outflow1.rds")
