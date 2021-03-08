@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Packages needed
 ```{r}
 if(!require(pacman)) install.packages("pacman")
-pacman::p_load(ggpubr, ggplot2, readxl, dplyr, lubridate, here, pkgcond)
+pacman::p_load(ggpubr, ggplot2, readxl, tidyverse, dplyr, lubridate, here, pkgcond, dataRetrieval, EGRET)
 ```
 
 Functions Used
@@ -31,8 +31,8 @@ mytheme <- theme_classic(base_size = 14) +
 
 #Suppress Messages
 suppress_messages(expr)
-
 ```
+
 
 Upload Data
 ```{r}
@@ -43,6 +43,104 @@ YSI <- read_excel(here("Data/YSI.xlsx"))
 FecalColiform <- read_excel(here("Data/FecalColiform.xlsx"))
 ```
 
+Processing Data
+```{r}
+#combine and isolate SWAMP data
+SWAMP_Nitrogen<- Nitrogen %>%
+  select(`Month`, `Day`, `Year`, `Site`, `Total N (ug/L)`, `NH4-N (ug/L)`, `NOX`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+
+SWAMP_Phosphorus<- Phosphorus %>%
+  select(`Month`, `Day`, `Year`, `Site`, `UTP`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+
+SWAMP_FecalColiform<- FecalColiform %>%
+  select(`Month`, `Day`, `Year`, `Site`, `FC`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+
+SWAMP_TotalSuspendedSolids<- TotalSuspendedSolids %>%
+  select(`Month`, `Day`, `Year`, `Site`, `TSS (mg/L)`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+
+SWAMP_YSI<- YSI %>%
+  select(`Month`, `Day`, `Year`, `Site`, `pH`, `Temp C`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+
+ALL_SWAMP_data<- bind_rows(SWAMP_Nitrogen, SWAMP_Phosphorus, SWAMP_FecalColiform, SWAMP_TotalSuspendedSolids, SWAMP_YSI)
+ALL_SWAMP_data$pH<- as.numeric(ALL_SWAMP_data$pH)
+ALL_SWAMP_data$`Temp C`<- as.numeric(ALL_SWAMP_data$`Temp C`)
+
+#Combine and Isolate Duke Garden Data
+DukeGarden_Nitrogen<- Nitrogen %>%
+  select(`Month`, `Day`, `Year`, `Site`, `Total N (ug/L)`, `NH4-N (ug/L)`, `NOX`) %>% 
+  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
+
+DukeGarden_Phosphorus<- Phosphorus %>%
+  select(`Month`, `Day`, `Year`, `Site`, `UTP`) %>% 
+  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
+
+DukeGarden_FecalColiform<- FecalColiform %>%
+  select(`Month`, `Day`, `Year`, `Site`, `FC`) %>% 
+  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
+
+DukeGarden_TotalSuspendedSolids<- TotalSuspendedSolids %>%
+  select(`Month`, `Day`, `Year`, `Site`, `TSS (mg/L)`) %>% 
+  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
+
+DukeGarden_YSI<- YSI %>%
+  select(`Month`, `Day`, `Year`, `Site`, `pH`, `Temp C`) %>% 
+  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
+
+DukeGarden_Data<- bind_rows(DukeGarden_Nitrogen, DukeGarden_Phosphorus, DukeGarden_FecalColiform, DukeGarden_TotalSuspendedSolids, DukeGarden_YSI)
+```
+
+Retrieve Water Flow Data - USGS
+  Site Numbers
+    Sandy Creek at Cornwallis Rd Near Durham, NC: 0209722970
+        Start date: 2008-07-22
+        End date: 2021-03-08
+    Sandy Creek at Picket Road, Durham, NC (downstream of SWAMP): 02097230
+        Start date: 2008-07-22
+        End date: 2021-03-08
+#Special note: Picket Road site does not have daily discharge
+
+  Parameter numbers: 
+    Daily Discharge, cubic feet per second: 00060
+    Discharge, instantaneous, cubic feet per second: 00061
+    Flow rate, instantaneous, gallons per minute: 00059
+    Gage Height, feet: 00065
+```{r}
+#USGS Data Retrieval 
+  #Site = Sandy Creek at Cornwallis
+  #Parameter = daily discharge
+DailyDischarge_Sandy<-readNWISDaily("0209722970", "00060", "2008-07-22", "2021-03-08")
+
+#Retrieve metadata for site and parameter
+  #Site = Sandy Creek at Cornwallis
+  #Parameter = daily discharge
+Info_Sandy <- readNWISInfo("0209722970", "00060")
+
+#organize into list
+eList_Sandy <- as.egret(Info_Sandy, DailyDischarge_Sandy)
+
+#set period of analysis
+Sandy_PA<-setPA(eList_Sandy)
+
+#Print info for 7-day minimum and max mean of daily mean discharge
+Sandy_Seven_Day_min<-plotFlowSingle(Sandy_PA, istat = 2, runoff = FALSE)
+Sandy_Seven_Day_max<-plotFlowSingle(Sandy_PA, istat = 7, runoff = FALSE)
+
+#print info for 30-day minimum and max mean of daily mean discharge
+Sandy_thirty_Day_min<-plotFlowSingle(Sandy_PA, istat = 3, runoff = FALSE)
+Sandy_thirty_Day_max<-plotFlowSingle(Sandy_PA, istat = 6, runoff = FALSE)
+
+#print info for mean of daily mean discharge
+Sandy_mean<-plotFlowSingle(Sandy_PA, istat = 5, runoff = FALSE)
+
+#print info for median of daily mean discharge
+Sandy_median<-plotFlowSingle(Sandy_PA, istat = 4, runoff = FALSE)
+
+```
 
 ###    About SWAMP    ###
 
@@ -110,103 +208,125 @@ Variables:
 
 ####                          ####
 
-Processing Data
-```{r}
-#combine and isolate SWAMP data
-SWAMP_Nitrogen<- Nitrogen %>%
-  select(`Month`, `Day`, `Year`, `Site`, `Total N (ug/L)`, `NH4-N (ug/L)`, `NOX`) %>% 
-  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
-
-SWAMP_Phosphorus<- Phosphorus %>%
-  select(`Month`, `Day`, `Year`, `Site`, `UTP`) %>% 
-  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
-
-SWAMP_FecalColiform<- FecalColiform %>%
-  select(`Month`, `Day`, `Year`, `Site`, `FC`) %>% 
-  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
-
-SWAMP_TotalSuspendedSolids<- TotalSuspendedSolids %>%
-  select(`Month`, `Day`, `Year`, `Site`, `TSS (mg/L)`) %>% 
-  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
-
-SWAMP_YSI<- YSI %>%
-  select(`Month`, `Day`, `Year`, `Site`, `pH`, `Temp C`) %>% 
-  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
-
-SWAMP_Data<- bind_rows(SWAMP_Nitrogen, SWAMP_Phosphorus, SWAMP_FecalColiform, SWAMP_TotalSuspendedSolids, SWAMP_YSI)
-
-SWAMP_means <- SWAMP_Data %>% 
-  group_by(`Month`, `Day`, `Year`, `Site`) %>% 
-summarise(Mean_TN = mean(`Total N (ug/L)`),
-          Mean_NH = mean(`NH4-N (ug/L)`),
-          Mean_NOX = mean(`NOX`),
-          Mean_TP = mean(`UTP`),
-          Mean_FC = mean(`FC`),
-          Mean_TSS = mean(`TSS (mg/L)`),
-          Mean_Temp = mean(`Temp C`),
-          )
-
-ALL_SWAMP_data<- bind_rows(SWAMP_Data, SWAMP_means)
-ALL_SWAMP_data$pH<- as.numeric(ALL_SWAMP_data$pH)
-
-#Combine and Isolate Duke Garden Data
-DukeGarden_Nitrogen<- Nitrogen %>%
-  select(`Month`, `Day`, `Year`, `Site`, `Total N (ug/L)`, `NH4-N (ug/L)`, `NOX`) %>% 
-  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
-
-DukeGarden_Phosphorus<- Phosphorus %>%
-  select(`Month`, `Day`, `Year`, `Site`, `UTP`) %>% 
-  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
-
-DukeGarden_FecalColiform<- FecalColiform %>%
-  select(`Month`, `Day`, `Year`, `Site`, `FC`) %>% 
-  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
-
-DukeGarden_TotalSuspendedSolids<- TotalSuspendedSolids %>%
-  select(`Month`, `Day`, `Year`, `Site`, `TSS (mg/L)`) %>% 
-  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
-
-DukeGarden_YSI<- YSI %>%
-  select(`Month`, `Day`, `Year`, `Site`, `pH`, `Temp C`) %>% 
-  filter(Site %in% c("D", "S", "U", "DP1", "DP2", "DP3"))
-
-DukeGarden_Data<- bind_rows(DukeGarden_Nitrogen, DukeGarden_Phosphorus, DukeGarden_FecalColiform, DukeGarden_TotalSuspendedSolids, DukeGarden_YSI)
-```
 
 
 Question 1. How does SWAMP water quality compare to EPA standards?
 ```{r}
 #Outflow sites were used to compare to EPA standards
-#outflow sites: WT2, WT3, WT5, DS1
+#outflow sites: WT2, WT3, WT5
 #Provide mean, median, and yearly average
 
 ###   Nitrogen   ###
 
-#Table 1. Total Nitrogen for WT2, WT3, WT5, DS1
+#Total Nitrogen - mean, median, yearly average
+TN_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_TN = mean(`Total N (ug/L)`, na.rm=TRUE),
+         Median_TN = median(`Total N (ug/L)`, na.rm=TRUE))
+print(TN_summary)
 
-#Table 2. Ammonium for WT2, WT3, WT5, DS1
+TN_Yearly <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Yearly_Mean_TN = mean(`Total N (ug/L)`, na.rm=TRUE),
+         Yearly_Median_TN = median(`Total N (ug/L)`, na.rm=TRUE))
+print(TN_Yearly)
 
-#Table 3. Nitrous Oxide for WT2, WT3, WT5, DS1
+#Ammonium - mean, median, yearly average
+NH_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_NH = mean(`NH4-N (ug/L)`, na.rm=TRUE),
+         Median_NH = median(`NH4-N (ug/L)`, na.rm=TRUE))
+print(NH_summary)
+
+NH_Yearly <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Yearly_Mean_NH = mean(`NH4-N (ug/L)`, na.rm=TRUE),
+         Yearly_Median_NH = median(`NH4-N (ug/L)`, na.rm=TRUE))
+print(NH_Yearly)
 
 ###   Phosphorus   ###
+#Phosphorus - mean, median, yearly average
+TP_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_TP = mean(`UTP`, na.rm=TRUE),
+         Median_TP = median(`UTP`, na.rm=TRUE))
+print(TP_summary)
 
-
+TP_Yearly <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Yearly_Mean_TP = mean(`UTP`, na.rm=TRUE),
+         Yearly_Median_TP = median(`UTP`, na.rm=TRUE))
+print(TP_Yearly)
 
 ###   Fecal Coliform   ###
+#Fecal Coliform - mean, median, yearly average
+FC_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_FC = mean(`FC`, na.rm=TRUE),
+         Median_FC = median(`FC`, na.rm=TRUE))
+print(FC_summary)
 
-
+FC_Yearly <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Yearly_Mean_FC = mean(`FC`, na.rm=TRUE),
+         Yearly_Median_FC = median(`FC`, na.rm=TRUE))
+print(FC_Yearly)
 
 ###   Temperature   ###
+#Temperature - mean, median, yearly average
+Temp_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_Temp = mean(`Temp C`, na.rm=TRUE),
+         Median_Temp = median(`Temp C`, na.rm=TRUE))
+print(Temp_summary)
 
-
+Temp_Yearly <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Yearly_Mean_Temp = mean(`Temp C`, na.rm=TRUE),
+         Yearly_Median_Temp = median(`Temp C`, na.rm=TRUE))
+print(Temp_Yearly)
 
 ###   pH   ###
+#pH - mean, median, yearly average
+pH_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_pH = mean(`pH`, na.rm=TRUE),
+         Median_pH = median(`pH`, na.rm=TRUE))
+print(pH_summary)
 
-
+pH_Yearly <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Yearly_Mean_pH = mean(`pH`, na.rm=TRUE),
+         Yearly_Median_pH = median(`pH`, na.rm=TRUE))
+print(pH_Yearly)
 
 ###   Sediment   ###
+#Sediment - mean, median, yearly average
+TSS_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_TSS = mean(`TSS (mg/L)`, na.rm=TRUE),
+         Median_TSS = median(`TSS (mg/L)`, na.rm=TRUE))
+print(TSS_summary)
 
-
+TSS_Yearly <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Yearly_Mean_TSS = mean(`TSS (mg/L)`, na.rm=TRUE),
+         Yearly_Median_TSS = median(`TSS (mg/L)`, na.rm=TRUE))
+print(TSS_Yearly)
 
 ```
 
