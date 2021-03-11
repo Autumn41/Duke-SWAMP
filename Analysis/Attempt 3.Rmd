@@ -267,29 +267,24 @@ Question 2. How effective is SWAMP in water quality treatment?
 #To compare site to site, daily mean used
   #Daily mean for each water quality variable from inflow subtracted from outflow to determine if increase or decrease in variable
 
-#Create daily average mean of TN for: WT1, BR5, WT2, WT3, WT5
+#Create daily average mean for: WT1, BR5, WT2, WT3, WT5
 ALL_SWAMP_data$daymonth <- strftime(ALL_SWAMP_data$date, format="%m-%d") 
-
 WT1_dailymean <- ALL_SWAMP_data %>% 
   filter(Site %in% c("WT1")) %>% 
   daily_mean() %>% 
   Too_many_dates()
-
 BR5_dailymean <- ALL_SWAMP_data %>% 
   filter(Site %in% c("BR5")) %>% 
   daily_mean() %>% 
   Too_many_dates()
-
 WT2_dailymean <- ALL_SWAMP_data %>% 
   filter(Site %in% c("WT2")) %>% 
   daily_mean() %>% 
   Too_many_dates()
-
 WT3_dailymean <- ALL_SWAMP_data %>% 
   filter(Site %in% c("WT3")) %>% 
   daily_mean() %>% 
   Too_many_dates()
-
 WT5_dailymean <- ALL_SWAMP_data %>% 
   filter(Site %in% c("WT5")) %>% 
   daily_mean() %>% 
@@ -297,13 +292,31 @@ WT5_dailymean <- ALL_SWAMP_data %>%
 
 
 #How different is WT1 to BR5? Site BR5 is also a inflow site, but BR5 could have other water quality inputs from golf course or garden. Have these additional inputs mattered?
+comparison1_TN<-SWAMP_means_medians %>% 
+    filter(Site %in% c("WT1", "BR5")) %>% 
+  select(Mean_TN, date) %>% 
+  na.omit()
 
+#Total Nitrogen comparison of WT1 and BR5
+  #unpaired T-test - samples are independent because inflow points do not effect eachother
+    #test normality
+      # Shapiro-Wilk normality test for WT1
+with(comparison1_TN, shapiro.test(Mean_TN[Site == "WT1"]))# p = < 2.2 e-16
+      # Shapiro-Wilk normality test for BR5
+with(comparison1_TN, shapiro.test(Mean_TN[Site == "BR5"])) # p = 8.167 e-16
+    #data is not normally distributed --> non-parametric two-sample t-test
+wilcox.test(Mean_TN ~ Site, data = comparison1_TN, exact = FALSE)
+        #p-value <2.2e-16, so WT1 median is different from BR5 median
+    #is WT1 median greater than BR5?
+wilcox.test(Mean_TN ~ Site, data = comparison1_TN, exact = FALSE, alternative = "greater")
+        #p-value <2.2e-16, so WT1 median is greater than BR5 median
 
 #How different is WT1 to outflow sites?
-
 #WT1 compared to WT2
 
+
 #WT1 compared to WT3
+
 
 #WT1 compared to WT5
 
