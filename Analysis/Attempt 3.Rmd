@@ -1,0 +1,396 @@
+---
+title: "Attempt 3"
+author: "Autumn Dunn"
+date: "3/8/2021"
+output: pdf_document
+---
+Packages needed
+```{r}
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(ggpubr, ggplot2, readxl, tidyverse, dplyr, lubridate, here, pkgcond, dataRetrieval, EGRET, naniar)
+```
+
+Functions Used
+```{r}
+#Fix days that will not be read as date
+fix_day = Vectorize(function(day) {
+  if (day %in% 1:9) return(paste0("0", day))
+  return(day)
+})
+
+#Graph Theme
+mytheme <- theme_classic(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "top") #alternative: legend.position + legend.justification
+
+#Suppress Messages
+suppress_messages(expr)
+```
+
+Upload Data
+```{r}
+Nitrogen <- read_excel(here("Data/Nitrogen.xlsx"))
+Phosphorus <- read_excel(here("Data/Phosphorus.xlsx"))
+TotalSuspendedSolids <- read_excel(here("Data/TotalSuspendedSolids.xlsx"))
+YSI <- read_excel(here("Data/YSI.xlsx"))
+FecalColiform <- read_excel(here("Data/FecalColiform.xlsx"))
+```
+
+Processing Data
+```{r}
+#combine and isolate SWAMP data
+SWAMP_Nitrogen<- Nitrogen %>%
+  select(`Month`, `Day`, `Year`, `Site`, `Total N (ug/L)`, `NH4-N (ug/L)`, `NOX`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+SWAMP_Phosphorus<- Phosphorus %>%
+  select(`Month`, `Day`, `Year`, `Site`, `UTP`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+SWAMP_FecalColiform<- FecalColiform %>%
+  select(`Month`, `Day`, `Year`, `Site`, `FC`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+SWAMP_TotalSuspendedSolids<- TotalSuspendedSolids %>%
+  select(`Month`, `Day`, `Year`, `Site`, `TSS (mg/L)`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+SWAMP_YSI<- YSI %>%
+  select(`Month`, `Day`, `Year`, `Site`, `pH`, `Temp C`) %>% 
+  filter(Site %in% c("WT1", "WT2", "WT3", "WT5", "BR5", "DS1"))
+ALL_SWAMP_data<- bind_rows(SWAMP_Nitrogen, SWAMP_Phosphorus, SWAMP_FecalColiform, SWAMP_TotalSuspendedSolids, SWAMP_YSI)
+ALL_SWAMP_data$pH<- as.numeric(ALL_SWAMP_data$pH)
+ALL_SWAMP_data$`Temp C`<- as.numeric(ALL_SWAMP_data$`Temp C`)
+
+#add date column to data
+ALL_SWAMP_data <- ALL_SWAMP_data %>%
+  mutate(date = ydm(paste0(Year, fix_day(Day), Month, sep="-")))
+
+#means and medians of data
+SWAMP_means_medians<- ALL_SWAMP_data %>% 
+    group_by(`Site`, `Year`, `Month`, `Day`, `date`) %>% 
+  summarise(Mean_TSS = mean(`TSS (mg/L)`, na.rm=TRUE),
+         Median_TSS = median(`TSS (mg/L)`, na.rm=TRUE),
+         Mean_TN = mean(`Total N (ug/L)`, na.rm=TRUE),
+         Median_TN = median(`Total N (ug/L)`, na.rm=TRUE),
+         Mean_pH = mean(`pH`, na.rm=TRUE),
+         Median_pH = median(`pH`, na.rm=TRUE),
+         Mean_Temp = mean(`Temp C`, na.rm=TRUE),
+         Median_Temp = median(`Temp C`, na.rm=TRUE),
+         Mean_FC = mean(`FC`, na.rm=TRUE),
+         Median_FC = median(`FC`, na.rm=TRUE),
+         Mean_TP = mean(`UTP`, na.rm=TRUE),
+         Median_TP = median(`UTP`, na.rm=TRUE),
+         Mean_NH = mean(`NH4-N (ug/L)`, na.rm=TRUE),
+         Median_NH = median(`NH4-N (ug/L)`, na.rm=TRUE))
+
+#replace NaN with NA
+SWAMP_means_medians <- SWAMP_means_medians %>%     
+  replace_with_na(replace = list(Mean_TSS = "NaN"))%>% 
+  replace_with_na(replace = list(Mean_TN = "NaN")) %>% 
+  replace_with_na(replace = list(Mean_pH = "NaN"))%>% 
+  replace_with_na(replace = list(Mean_Temp = "NaN"))%>% 
+  replace_with_na(replace = list(Mean_FC = "NaN"))%>% 
+  replace_with_na(replace = list(Mean_TP = "NaN"))%>% 
+  replace_with_na(replace = list(Mean_NH = "NaN"))%>% 
+  replace_with_na(replace = list(Median_TSS = "NaN"))%>% 
+  replace_with_na(replace = list(Median_TN = "NaN"))%>% 
+  replace_with_na(replace = list(Median_pH = "NaN"))%>% 
+  replace_with_na(replace = list(Median_Temp = "NaN"))%>% 
+  replace_with_na(replace = list(Median_FC = "NaN"))%>% 
+  replace_with_na(replace = list(Median_TP = "NaN"))%>% 
+  replace_with_na(replace = list(Median_NH = "NaN")) 
+```
+
+###    About SWAMP    ###
+
+SWAMP Information:
+- Inflow:
+    Phase 1 -- WT1
+    Phase 3 -- BR5
+- Outflow:
+    Phase 2 -- WT3
+            -- WT5
+            -- DS1
+    Phase 3 -- WT2
+    
+Phase Details:
+- Phase 1 = stream reconfigutation
+- Phase 2 = dam and impoundment
+- Phase 3 = treatment wetland
+
+Site Details:
+- WT1 = Downstream of culvert at HWY 751, CONTROL SITE
+- WT2 = Downstream of tributary after Phase III
+- WT3 = Upstream of sewer line
+- WT5 = Upstream of old dam structure within retention basin of concrete dam, IMPACT SITE
+- BR5 = Bio-retention Upstream across HWY 751
+- DS1 = Downstream of old concrete dam structure
+
+###                   ###
+
+####  Water Quality Standards ####
+
+Variables:
+- Nitrogen (NOx, TN, NH)
+  (TN - Total Nitrogen) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont): 800 ug/L 
+  (NH - Ammonium) EPA standard for NH: 20 ug/L
+  (NOx - Nitrous Oxide) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont: 345 ug/L
+- Phosphorus (TP - Total Phosphorus)
+    EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont): 30 ug/L
+- Fecal Coliform (FC)
+    State of NC water quality criteria: 200 colonies/100 mL
+- Temperature (Temp)
+    NCDENR/DWQ standard for lower Piedmont, non-trout streams: < 32 C
+- pH
+    NC water quality standard: 6-9
+- Sediment (TSS)
+    EPA standard for TSS for 30-day average: 30,000 ug/L
+    EPA standard for TSS for 7-day average: 45,000 ug/L
+
+####                          ####
+
+Question 1. How does SWAMP water quality compare to EPA standards?
+```{r}
+#Outflow sites were used to compare to EPA standards
+#outflow sites: WT2, WT3, WT5
+#Provide mean, median, and yearly average
+
+#All graphs taken from Graph2.Rmd file located on Github
+
+###   Total Nitrogen  ###
+#Graph
+print(TN_2008_2020)
+
+###     Ammonium      ###
+#Graph
+print(NH_2008_2020)
+
+### Total Phosphorus  ###
+#Graph
+print(TP_2008_2020)
+
+###  Fecal Coliform  ###
+#Graph
+print(FC_2008_2020)
+
+###   Temperature    ###
+#Graph
+print(Temp_2008_2020)
+
+###       pH        ###
+#Graph
+print(pH_2008_2020)
+
+###       TSS       ###
+#Graph
+print(TSS_2008_2020)
+
+
+###       ALL       ###
+#Mean and Median
+ALL_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+        filter(Year %in% c(2008:2020)) %>% 
+  group_by(`Site`) %>% 
+  summarise(Mean_TSS = mean(`TSS (mg/L)`, na.rm=TRUE),
+         Median_TSS = median(`TSS (mg/L)`, na.rm=TRUE),
+         Mean_TN = mean(`Total N (ug/L)`, na.rm=TRUE),
+         Median_TN = median(`Total N (ug/L)`, na.rm=TRUE),
+         Mean_pH = mean(`pH`, na.rm=TRUE),
+         Median_pH = median(`pH`, na.rm=TRUE),
+         Mean_Temp = mean(`Temp C`, na.rm=TRUE),
+         Median_Temp = median(`Temp C`, na.rm=TRUE),
+         Mean_FC = mean(`FC`, na.rm=TRUE),
+         Median_FC = median(`FC`, na.rm=TRUE),
+         Mean_TP = mean(`UTP`, na.rm=TRUE),
+         Median_TP = median(`UTP`, na.rm=TRUE),
+         Mean_NH = mean(`NH4-N (ug/L)`, na.rm=TRUE),
+         Median_NH = median(`NH4-N (ug/L)`, na.rm=TRUE))
+
+#Yearly Mean and Median
+Yearly_summary <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2", "WT3", "WT5")) %>% 
+        filter(Year %in% c(2008:2020)) %>% 
+  group_by(`Site`, `Year`) %>% 
+  summarise(Mean_TSS = mean(`TSS (mg/L)`, na.rm=TRUE),
+         Median_TSS = median(`TSS (mg/L)`, na.rm=TRUE),
+         Mean_TN = mean(`Total N (ug/L)`, na.rm=TRUE),
+         Median_TN = median(`Total N (ug/L)`, na.rm=TRUE),
+         Mean_pH = mean(`pH`, na.rm=TRUE),
+         Median_pH = median(`pH`, na.rm=TRUE),
+         Mean_Temp = mean(`Temp C`, na.rm=TRUE),
+         Median_Temp = median(`Temp C`, na.rm=TRUE),
+         Mean_FC = mean(`FC`, na.rm=TRUE),
+         Median_FC = median(`FC`, na.rm=TRUE),
+         Mean_TP = mean(`UTP`, na.rm=TRUE),
+         Median_TP = median(`UTP`, na.rm=TRUE),
+         Mean_NH = mean(`NH4-N (ug/L)`, na.rm=TRUE),
+         Median_NH = median(`NH4-N (ug/L)`, na.rm=TRUE))
+```
+
+
+Question 2. How effective is SWAMP in water quality treatment?
+```{r}
+#Inflow and Outflow sites compared
+#WT1 is a control site, considered pre-treatment to SWAMP
+#To compare site to site, daily mean used
+  #Daily mean for each water quality variable from inflow subtracted from outflow to determine if increase or decrease in variable
+
+#Create daily average mean of TN for: WT1, BR5, WT2, WT3, WT5
+ALL_SWAMP_data$daymonth <- strftime(ALL_SWAMP_data$date, format="%m-%d") 
+WT1 <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT1"))
+WT1_dailymean<- 
+  transform(WT1, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT1, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
+  transform(WT1, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT1, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
+  transform(WT1, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT1, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
+  transform(WT1, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT1, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
+  transform(WT1, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT1, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
+  transform(WT1, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT1, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
+  transform(WT1, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT1, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
+          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
+  replace_with_na(replace = list(TN = "NaN")) %>% 
+  replace_with_na(replace = list(TSS = "NaN")) %>% 
+  replace_with_na(replace = list(pH = "NaN")) %>% 
+  replace_with_na(replace = list(UTP = "NaN")) %>% 
+  replace_with_na(replace = list(FC = "NaN")) %>% 
+  replace_with_na(replace = list(NH = "NaN")) %>% 
+  replace_with_na(replace = list(Temp = "NaN")) 
+WT1_dailymean <- WT1_dailymean[!duplicated(WT1_dailymean[c('date')]),]
+
+BR5 <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("BR5"))
+BR5_dailymean<- 
+  transform(BR5, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(BR5, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
+  transform(BR5, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(BR5, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
+  transform(BR5, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(BR5, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
+  transform(BR5, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(BR5, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
+  transform(BR5, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(BR5, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
+  transform(BR5, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(BR5, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
+  transform(BR5, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(BR5, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
+          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
+  replace_with_na(replace = list(TN = "NaN")) %>% 
+  replace_with_na(replace = list(TSS = "NaN")) %>% 
+  replace_with_na(replace = list(pH = "NaN")) %>% 
+  replace_with_na(replace = list(UTP = "NaN")) %>% 
+  replace_with_na(replace = list(FC = "NaN")) %>% 
+  replace_with_na(replace = list(NH = "NaN")) %>% 
+  replace_with_na(replace = list(Temp = "NaN")) 
+BR5_dailymean <- BR5_dailymean[!duplicated(BR5_dailymean[c('date')]),]
+
+WT2 <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2"))
+WT2_dailymean<-   
+  transform(WT2, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT2, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
+  transform(WT2, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT2, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
+  transform(WT2, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT2, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
+  transform(WT2, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT2, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
+  transform(WT2, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT2, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
+  transform(WT1, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT2, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
+  transform(WT1, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT2, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
+          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
+  replace_with_na(replace = list(TN = "NaN")) %>% 
+  replace_with_na(replace = list(TSS = "NaN")) %>% 
+  replace_with_na(replace = list(pH = "NaN")) %>% 
+  replace_with_na(replace = list(UTP = "NaN")) %>% 
+  replace_with_na(replace = list(FC = "NaN")) %>% 
+  replace_with_na(replace = list(NH = "NaN")) %>% 
+  replace_with_na(replace = list(Temp = "NaN")) 
+WT2_dailymean <- WT2_dailymean[!duplicated(WT2_dailymean[c('date')]),]
+
+WT3 <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT3"))
+WT3_dailymean<-   
+  transform(WT3, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT3, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
+  transform(WT3, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT3, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
+  transform(WT3, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT3, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
+  transform(WT3, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT3, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
+  transform(WT3, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT3, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
+  transform(WT3, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT3, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
+  transform(WT3, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT3, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
+          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
+  replace_with_na(replace = list(TN = "NaN")) %>% 
+  replace_with_na(replace = list(TSS = "NaN")) %>% 
+  replace_with_na(replace = list(pH = "NaN")) %>% 
+  replace_with_na(replace = list(UTP = "NaN")) %>% 
+  replace_with_na(replace = list(FC = "NaN")) %>% 
+  replace_with_na(replace = list(NH = "NaN")) %>% 
+  replace_with_na(replace = list(Temp = "NaN")) 
+WT3_dailymean <- WT3_dailymean[!duplicated(WT3_dailymean[c('date')]),]
+
+WT5 <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT5"))
+WT5_dailymean<-   
+  transform(WT5, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT5, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
+  transform(WT5, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT5, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
+  transform(WT5, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT5, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
+  transform(WT5, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT5, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
+  transform(WT5, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT5, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
+  transform(WT5, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT5, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
+  transform(WT5, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(WT5, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
+          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
+  replace_with_na(replace = list(TN = "NaN")) %>% 
+  replace_with_na(replace = list(TSS = "NaN")) %>% 
+  replace_with_na(replace = list(pH = "NaN")) %>% 
+  replace_with_na(replace = list(UTP = "NaN")) %>% 
+  replace_with_na(replace = list(FC = "NaN")) %>% 
+  replace_with_na(replace = list(NH = "NaN")) %>% 
+  replace_with_na(replace = list(Temp = "NaN")) 
+WT5_dailymean <- WT5_dailymean[!duplicated(WT5_dailymean[c('date')]),]
+
+
+#How different is WT1 to BR5? Site BR5 is also a inflow site, but BR5 could have other water quality inputs from golf course or garden. Have these additional inputs mattered?
+
+
+#How different is WT1 to outflow sites?
+
+#WT1 compared to WT2
+
+#WT1 compared to WT3
+
+#WT1 compared to WT5
+
+
+
+```
+
+
+Question 3. How much is Duke Garden effecting SWAMP's water quality?
+
+
+
+Question 4. What is the future of SWAMP water treatment?
+
+
