@@ -1,0 +1,124 @@
+---
+title: "USGS Data Retrieval"
+author: "Autumn Dunn"
+date: "3/11/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+All USGS R Packages: https://owi.usgs.gov/R/training-curriculum/intro-curriculum/USGS/
+EGRIS: https://pubs.usgs.gov/tm/04/a10/pdf/tm4A10.pdf
+
+
+Packages needed
+```{r}
+if(!require(pacman)) install.packages("pacman")
+pacman::p_load(ggpubr, ggplot2, readxl, tidyverse, dplyr, lubridate, here, pkgcond, dataRetrieval, EGRET)
+```
+
+Retrieve Water Flow Data - USGS
+  Site Numbers
+    Sandy Creek at Cornwallis Rd Near Durham, NC: 0209722970
+        Start date: 2008-07-22
+        End date: 2021-03-08
+    Sandy Creek at Picket Road, Durham, NC (downstream of SWAMP): 02097230
+        Start date: 2008-07-22
+        End date: 2021-03-08
+#Special note: Picket Road site does not have daily discharge
+
+  Parameter numbers: 
+    Daily Discharge, cubic feet per second: 00060
+    Discharge, instantaneous, cubic feet per second: 00061
+    Flow rate, instantaneous, gallons per minute: 00059
+    Gage Height, feet: 00065
+```{r}
+#USGS Data Retrieval 
+  #Site = Sandy Creek at Cornwallis
+  #Parameter = daily discharge
+DailyDischarge_Sandy<-readNWISDaily("0209722970", "00060", "2008-07-22", "2021-03-08")
+
+#siteNumber <- "0209722970"
+#parameterCd <- c("00065","00060","00059")  
+    # gage height, discharge, flow rate
+#statCd <- c("00001","00003")  
+    # Mean and maximum
+#startDate <- "2008-07-22"
+#endDate <- "2012-03-08"
+
+Sandy <- readNWISdv("0209722970", c("00065","00060","00059"), "2008-07-22", "2012-03-08", statCd=c("00001", "00002", "00003", "00008"))
+Sandy<-renameNWISColumns(Sandy)
+
+discharge_stats <- readNWISstat(siteNumbers=c("0209722970"),
+                   parameterCd=c("00065","00060","00059"),
+                   statReportType="annual") 
+```
+
+information on the dataRetrieval package: https://cran.r-project.org/web/packages/dataRetrieval/vignettes/dataRetrieval.html
+
+dv = daily
+  https://waterservices.usgs.gov/rest/DV-Test-Tool.html
+iv = instantaneous
+  https://waterservices.usgs.gov/rest/IV-Test-Tool.html
+gwlevels = groundwater levels
+  https://waterservices.usgs.gov/rest/GW-Levels-Test-Tool.html
+qwdata = water quality
+  https://nwis.waterdata.usgs.gov/nwis/qwdata
+measurements = surface water measurements
+  https://waterdata.usgs.gov/nwis/measurements/
+peak = peak flow
+	https://nwis.waterdata.usgs.gov/usa/nwis/peak/
+stat = statistics service
+  https://waterservices.usgs.gov/rest/Statistics-Service-Test-Tool.html
+  
+  
+```{r}
+#report:
+  #annual mean flow
+  #Highest annual mean flow
+  #lowest annual mean flow
+  #highest daily mean flow
+  #lowest daily mean flow
+  #annual seven-day minimum flow
+  #instantaneous peak flow
+  #instantaneous peak stage
+
+```
+
+
+Following https://pubs.usgs.gov/tm/04/a10/pdf/tm4A10.pdf page 20
+```{r}
+#Retrieve metadata for site and parameter
+  #Site = Sandy Creek at Cornwallis
+  #Parameter = daily discharge
+INFO <- readNWISInfo("0209722970", "00060")
+
+#This initiates an interactive process of retrieving the metadata for the site and parameter. It provides some of that information to the user and prompts the user for various types of text information for labeling of files and graphics. All of the metadata, including the user responses to prompts, are stored in the INFO data frame. After the INFO and Daily data frames have been created, they need to be organized into the list called eList, using command:
+eList <- as.egret(INFO, DailyDischarge_Sandy)
+
+#the function sets up the period of analysis as the water year and sets the nominal half-window width H to 20 years. The function performs no computations, but simply augments the metadata stored in the INFO data frame (stored in eList) with the paStart, paLong and window values (where H = window). In the default case, the command is:
+eList <- setPA(eList)
+
+#To generate a table suitable for printing or for input to some other analysis, the output from plotFlowSingle can be displayed by using the function printSeries. The only argument that must be specified for this function is istat; all others can be their default values. Producing a table of numbers that corresponds to figure 4, but with the discharge values reported as runoff in mm/day, can be done with the following command:
+
+    #Print info for 7-day minimum and max mean of daily mean discharge
+Sandy_Seven_Day_min<-plotFlowSingle(eList, istat = 2, runoff = FALSE)
+Sandy_Seven_Day_max<-plotFlowSingle(eList, istat = 7, runoff = FALSE)
+    #print info for 30-day minimum and max mean of daily mean discharge
+Sandy_thirty_Day_min<-plotFlowSingle(eList, istat = 3, runoff = FALSE)
+Sandy_thirty_Day_max<-plotFlowSingle(eList, istat = 6, runoff = FALSE)
+    #print info for mean of daily mean discharge
+Sandy_mean<-plotFlowSingle(eList, istat = 5, runoff = FALSE)
+    #print info for median of daily mean discharge
+Sandy_median<-plotFlowSingle(eList, istat = 4, runoff = FALSE)
+
+tableFlowChange(eList, istat = 2, qUnit = 2)
+```
+
+Graphs
+```{r}
+ ggplot(data = Sandy,
+             aes(Date, Flow)) +
+      geom_line()
+```
