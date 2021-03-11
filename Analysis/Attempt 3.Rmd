@@ -18,6 +18,37 @@ fix_day = Vectorize(function(day) {
   return(day)
 })
 
+#daily mean for an individual site
+daily_mean = function(Site) {
+  transform(Site, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(Site, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
+  transform(Site, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(Site, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
+  transform(Site, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(Site, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
+  transform(Site, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(Site, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
+  transform(Site, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(Site, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
+  transform(Site, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(Site, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
+  transform(Site, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
+              transform(Site, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
+          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
+  replace_with_na(replace = list(TN = "NaN")) %>% 
+  replace_with_na(replace = list(TSS = "NaN")) %>% 
+  replace_with_na(replace = list(pH = "NaN")) %>% 
+  replace_with_na(replace = list(UTP = "NaN")) %>% 
+  replace_with_na(replace = list(FC = "NaN")) %>% 
+  replace_with_na(replace = list(NH = "NaN")) %>% 
+  replace_with_na(replace = list(Temp = "NaN")) 
+}
+
+#duplicate dates
+Too_many_dates = function(x) {
+  x[!duplicated(x[c('date')]),]
+}
+                 
 #Graph Theme
 mytheme <- theme_classic(base_size = 14) +
   theme(axis.text = element_text(color = "black"), 
@@ -64,8 +95,8 @@ ALL_SWAMP_data <- ALL_SWAMP_data %>%
 
 #means and medians of data
 SWAMP_means_medians<- ALL_SWAMP_data %>% 
-    group_by(`Site`, `Year`, `Month`, `Day`, `date`) %>% 
-  summarise(Mean_TSS = mean(`TSS (mg/L)`, na.rm=TRUE),
+    group_by(`Site`, `date`) %>% 
+ summarise(Mean_TSS = mean(`TSS (mg/L)`, na.rm=TRUE),
          Median_TSS = median(`TSS (mg/L)`, na.rm=TRUE),
          Mean_TN = mean(`Total N (ug/L)`, na.rm=TRUE),
          Median_TN = median(`Total N (ug/L)`, na.rm=TRUE),
@@ -96,6 +127,8 @@ SWAMP_means_medians <- SWAMP_means_medians %>%
   replace_with_na(replace = list(Median_FC = "NaN"))%>% 
   replace_with_na(replace = list(Median_TP = "NaN"))%>% 
   replace_with_na(replace = list(Median_NH = "NaN")) 
+
+
 ```
 
 ###    About SWAMP    ###
@@ -223,6 +256,7 @@ Yearly_summary <- ALL_SWAMP_data %>%
          Median_TP = median(`UTP`, na.rm=TRUE),
          Mean_NH = mean(`NH4-N (ug/L)`, na.rm=TRUE),
          Median_NH = median(`NH4-N (ug/L)`, na.rm=TRUE))
+
 ```
 
 
@@ -235,140 +269,31 @@ Question 2. How effective is SWAMP in water quality treatment?
 
 #Create daily average mean of TN for: WT1, BR5, WT2, WT3, WT5
 ALL_SWAMP_data$daymonth <- strftime(ALL_SWAMP_data$date, format="%m-%d") 
-WT1 <- ALL_SWAMP_data %>% 
-  filter(Site %in% c("WT1"))
-WT1_dailymean<- 
-  transform(WT1, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT1, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
-  transform(WT1, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT1, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
-  transform(WT1, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT1, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
-  transform(WT1, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT1, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
-  transform(WT1, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT1, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
-  transform(WT1, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT1, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
-  transform(WT1, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT1, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
-          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
-  replace_with_na(replace = list(TN = "NaN")) %>% 
-  replace_with_na(replace = list(TSS = "NaN")) %>% 
-  replace_with_na(replace = list(pH = "NaN")) %>% 
-  replace_with_na(replace = list(UTP = "NaN")) %>% 
-  replace_with_na(replace = list(FC = "NaN")) %>% 
-  replace_with_na(replace = list(NH = "NaN")) %>% 
-  replace_with_na(replace = list(Temp = "NaN")) 
-WT1_dailymean <- WT1_dailymean[!duplicated(WT1_dailymean[c('date')]),]
 
-BR5 <- ALL_SWAMP_data %>% 
-  filter(Site %in% c("BR5"))
-BR5_dailymean<- 
-  transform(BR5, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(BR5, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
-  transform(BR5, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(BR5, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
-  transform(BR5, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(BR5, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
-  transform(BR5, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(BR5, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
-  transform(BR5, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(BR5, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
-  transform(BR5, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(BR5, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
-  transform(BR5, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(BR5, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
-          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
-  replace_with_na(replace = list(TN = "NaN")) %>% 
-  replace_with_na(replace = list(TSS = "NaN")) %>% 
-  replace_with_na(replace = list(pH = "NaN")) %>% 
-  replace_with_na(replace = list(UTP = "NaN")) %>% 
-  replace_with_na(replace = list(FC = "NaN")) %>% 
-  replace_with_na(replace = list(NH = "NaN")) %>% 
-  replace_with_na(replace = list(Temp = "NaN")) 
-BR5_dailymean <- BR5_dailymean[!duplicated(BR5_dailymean[c('date')]),]
+WT1_dailymean <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT1")) %>% 
+  daily_mean() %>% 
+  Too_many_dates()
 
-WT2 <- ALL_SWAMP_data %>% 
-  filter(Site %in% c("WT2"))
-WT2_dailymean<-   
-  transform(WT2, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT2, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
-  transform(WT2, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT2, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
-  transform(WT2, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT2, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
-  transform(WT2, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT2, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
-  transform(WT2, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT2, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
-  transform(WT1, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT2, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
-  transform(WT1, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT2, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
-          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
-  replace_with_na(replace = list(TN = "NaN")) %>% 
-  replace_with_na(replace = list(TSS = "NaN")) %>% 
-  replace_with_na(replace = list(pH = "NaN")) %>% 
-  replace_with_na(replace = list(UTP = "NaN")) %>% 
-  replace_with_na(replace = list(FC = "NaN")) %>% 
-  replace_with_na(replace = list(NH = "NaN")) %>% 
-  replace_with_na(replace = list(Temp = "NaN")) 
-WT2_dailymean <- WT2_dailymean[!duplicated(WT2_dailymean[c('date')]),]
+BR5_dailymean <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("BR5")) %>% 
+  daily_mean() %>% 
+  Too_many_dates()
 
-WT3 <- ALL_SWAMP_data %>% 
-  filter(Site %in% c("WT3"))
-WT3_dailymean<-   
-  transform(WT3, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT3, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
-  transform(WT3, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT3, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
-  transform(WT3, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT3, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
-  transform(WT3, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT3, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
-  transform(WT3, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT3, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
-  transform(WT3, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT3, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
-  transform(WT3, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT3, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
-          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
-  replace_with_na(replace = list(TN = "NaN")) %>% 
-  replace_with_na(replace = list(TSS = "NaN")) %>% 
-  replace_with_na(replace = list(pH = "NaN")) %>% 
-  replace_with_na(replace = list(UTP = "NaN")) %>% 
-  replace_with_na(replace = list(FC = "NaN")) %>% 
-  replace_with_na(replace = list(NH = "NaN")) %>% 
-  replace_with_na(replace = list(Temp = "NaN")) 
-WT3_dailymean <- WT3_dailymean[!duplicated(WT3_dailymean[c('date')]),]
+WT2_dailymean <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT2")) %>% 
+  daily_mean() %>% 
+  Too_many_dates()
 
-WT5 <- ALL_SWAMP_data %>% 
-  filter(Site %in% c("WT5"))
-WT5_dailymean<-   
-  transform(WT5, TN =ave(`Total N (ug/L)`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT5, `Total.N..ug.L.` =ifelse(is.na(`Total.N..ug.L.`),TN,`Total.N..ug.L.`)) %>% 
-  transform(WT5, TSS =ave(`TSS..mg.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT5, `TSS..mg.L.` =ifelse(is.na(`TSS..mg.L.`),TSS,`TSS..mg.L.`)) %>% 
-  transform(WT5, pH =ave(`pH`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT5, `pH` =ifelse(is.na(`pH`),pH,`pH`)) %>% 
-  transform(WT5, UTP =ave(`UTP`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT5, `UTP` =ifelse(is.na(`UTP`),UTP,`UTP`)) %>% 
-  transform(WT5, FC =ave(`FC`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT5, `FC` =ifelse(is.na(`FC`),FC,`FC`)) %>% 
-  transform(WT5, NH =ave(`NH4.N..ug.L.`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT5, `NH4.N..ug.L.` =ifelse(is.na(`NH4.N..ug.L.`),NH,`NH4.N..ug.L.`)) %>% 
-  transform(WT5, Temp =ave(`Temp.C`, daymonth, FUN=function(x) mean(x,na.rm=TRUE) )) %>% 
-              transform(WT5, `Temp.C` =ifelse(is.na(`Temp.C`),Temp,`Temp.C`)) %>% 
-          select(`Site`, `date`, `TN`, `TSS`, `pH`, `UTP`, `FC`, `NH`, `Temp`) %>%     
-  replace_with_na(replace = list(TN = "NaN")) %>% 
-  replace_with_na(replace = list(TSS = "NaN")) %>% 
-  replace_with_na(replace = list(pH = "NaN")) %>% 
-  replace_with_na(replace = list(UTP = "NaN")) %>% 
-  replace_with_na(replace = list(FC = "NaN")) %>% 
-  replace_with_na(replace = list(NH = "NaN")) %>% 
-  replace_with_na(replace = list(Temp = "NaN")) 
-WT5_dailymean <- WT5_dailymean[!duplicated(WT5_dailymean[c('date')]),]
+WT3_dailymean <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT3")) %>% 
+  daily_mean() %>% 
+  Too_many_dates()
+
+WT5_dailymean <- ALL_SWAMP_data %>% 
+  filter(Site %in% c("WT5")) %>% 
+  daily_mean() %>% 
+  Too_many_dates()
 
 
 #How different is WT1 to BR5? Site BR5 is also a inflow site, but BR5 could have other water quality inputs from golf course or garden. Have these additional inputs mattered?
