@@ -385,23 +385,23 @@ Analysis : Daily
 Daily Summary:
 ```{r}
 ### WT3 ###
-WT3_daily           <- t(
-                       merge(WT3_FC_Exceeded_count_day, 
-                       merge(WT3_NH_Exceeded_count_day, 
-                       merge(WT3_TN_Exceeded_count_day, 
-                       merge(WT3_NOX_Exceeded_count_day, 
-                       merge(WT3_pH_Exceeded_count_day, 
-                       merge(WT3_TP_Exceeded_count_day, 
+WT3_daily             <- t(
+                         merge(WT3_FC_Exceeded_count_day, 
+                         merge(WT3_NH_Exceeded_count_day, 
+                         merge(WT3_TN_Exceeded_count_day, 
+                         merge(WT3_NOX_Exceeded_count_day, 
+                         merge(WT3_pH_Exceeded_count_day, 
+                         merge(WT3_TP_Exceeded_count_day, 
                              WT3_Temp_Exceeded_count_day))))), 
-                       by = "Site"))
+                         by = "Site"))
 
-WT3_TN_daily_exceed <- Daily_TN_WT3 %>% 
-                       select(`Day`, `Month`, `Year`, `TN_Exceeded`) %>% 
-                       na.omit()
-WT3_FC_daily_exceed <- Daily_FC_WT3 %>% 
+WT3_TN_daily_exceed   <- Daily_TN_WT3 %>% 
+                         select(`Day`, `Month`, `Year`, `TN_Exceeded`) %>% 
+                         na.omit()
+WT3_FC_daily_exceed   <- Daily_FC_WT3 %>% 
                          select(`Day`, `Month`, `Year`, `FC_Exceeded`) %>% 
                          na.omit()
-WT3_NH_daily_exceed <- Daily_NH_WT3 %>% 
+WT3_NH_daily_exceed   <- Daily_NH_WT3 %>% 
                          select(`Day`, `Month`, `Year`, `NH_Exceeded`) %>% 
                          na.omit()
 WT3_NOX_daily_exceed  <- Daily_NOX_WT3 %>% 
