@@ -28,8 +28,6 @@ Summary:
 Data for this analysis is located in the Data folder and is called upon in the code.
 
 
-
-
 ####  Water Quality Standards ####
 
 Variables:
@@ -424,9 +422,31 @@ WT5_daily <- t(
              merge(WT5_TN_Exceeded_count_day, 
              merge(WT5_NOX_Exceeded_count_day, 
              merge(WT5_pH_Exceeded_count_day, 
-             merge(WT5_TP_Exceeded_count_day, WT5_Temp_Exceeded_count_day))))), 
+             merge(WT5_TP_Exceeded_count_day, 
+                   WT5_Temp_Exceeded_count_day))))), 
              by = "Site"))
 
+WT5_TN_daily_exceed   <- Daily_TN_WT5 %>% 
+                         select(`Day`, `Month`, `Year`, `TN_Exceeded`) %>% 
+                         na.omit()
+WT5_FC_daily_exceed   <- Daily_FC_WT5 %>% 
+                         select(`Day`, `Month`, `Year`, `FC_Exceeded`) %>% 
+                         na.omit()
+WT5_NH_daily_exceed   <- Daily_NH_WT5 %>% 
+                         select(`Day`, `Month`, `Year`, `NH_Exceeded`) %>% 
+                         na.omit()
+WT5_NOX_daily_exceed  <- Daily_NOX_WT5 %>% 
+                         select(`Day`, `Month`, `Year`, `NOX_Exceeded`) %>% 
+                         na.omit()
+WT5_Temp_daily_exceed <- Daily_Temp_WT5 %>% 
+                         select(`Day`, `Month`, `Year`, `Temp_Exceeded`) %>% 
+                         na.omit()
+WT5_pH_daily_exceed   <- Daily_pH_WT5 %>% 
+                         select(`Day`, `Month`, `Year`, `pH_Exceeded`) %>% 
+                         na.omit()
+WT5_TP_daily_exceed   <- Daily_TP_WT5 %>% 
+                         select(`Day`, `Month`, `Year`, `TP_Exceeded`) %>% 
+                         na.omit()
 ```
 
 Analysis : Monthly
@@ -671,6 +691,71 @@ Analysis : Monthly
 
 Monthly Summary:
 ```{r}
+### WT3 ###
+WT3_monthly             <- t(
+                           merge(WT3_FC_Exceeded_count_month, 
+                           merge(WT3_NH_Exceeded_count_month, 
+                           merge(WT3_TN_Exceeded_count_month, 
+                           merge(WT3_NOX_Exceeded_count_month, 
+                           merge(WT3_pH_Exceeded_count_month, 
+                           merge(WT3_TP_Exceeded_count_month, 
+                                 WT3_Temp_Exceeded_count_month))))), 
+                           by = "Site"))
+
+WT3_TN_monthly_exceed   <- Monthly_TN_WT3 %>% 
+                           select(`Month`, `Year`, `TN_Exceeded`) %>% 
+                           na.omit()
+WT3_FC_monthly_exceed   <- Monthly_FC_WT3 %>% 
+                           select(`Month`, `Year`, `FC_Exceeded`) %>% 
+                           na.omit()
+WT3_NH_monthly_exceed   <- Monthly_NH_WT3 %>% 
+                           select(`Month`, `Year`, `NH_Exceeded`) %>% 
+                           na.omit()
+WT3_NOX_monthly_exceed  <- Monthly_NOX_WT3 %>% 
+                           select(`Month`, `Year`, `NOX_Exceeded`) %>% 
+                           na.omit()
+WT3_Temp_monthly_exceed <- Monthly_Temp_WT3 %>% 
+                           select(`Month`, `Year`, `Temp_Exceeded`) %>% 
+                           na.omit()
+WT3_pH_monthly_exceed   <- Monthly_pH_WT3 %>% 
+                           select(`Month`, `Year`, `pH_Exceeded`) %>% 
+                           na.omit()
+WT3_TP_monthly_exceed   <- Monthly_TP_WT3 %>% 
+                           select(`Month`, `Year`, `TP_Exceeded`) %>% 
+                           na.omit()
+
+### WT5 ###
+WT5_monthly             <- t(
+                           merge(WT5_FC_Exceeded_count_month, 
+                           merge(WT5_NH_Exceeded_count_month, 
+                           merge(WT5_TN_Exceeded_count_month, 
+                           merge(WT5_NOX_Exceeded_count_month, 
+                           merge(WT5_pH_Exceeded_count_month, 
+                           merge(WT5_TP_Exceeded_count_month, 
+                                 WT5_Temp_Exceeded_count_month))))), 
+                           by = "Site"))
+
+WT5_TN_monthly_exceed   <- Monthly_TN_WT5 %>% 
+                           select(`Month`, `Year`, `TN_Exceeded`) %>% 
+                           na.omit()
+WT5_FC_monthly_exceed   <- Monthly_FC_WT5 %>% 
+                           select( `Month`, `Year`, `FC_Exceeded`) %>% 
+                           na.omit()
+WT5_NH_monthly_exceed   <- Monthly_NH_WT5 %>% 
+                           select(`Month`, `Year`, `NH_Exceeded`) %>% 
+                           na.omit()
+WT5_NOX_monthly_exceed  <- Monthly_NOX_WT5 %>% 
+                           select(`Month`, `Year`, `NOX_Exceeded`) %>% 
+                           na.omit()
+WT5_Temp_monthly_exceed <- Monthly_Temp_WT5 %>% 
+                           select(`Month`, `Year`, `Temp_Exceeded`) %>% 
+                           na.omit()
+WT5_pH_monthly_exceed   <- Monthly_pH_WT5 %>% 
+                           select( `Month`, `Year`, `pH_Exceeded`) %>% 
+                           na.omit()
+WT5_TP_monthly_exceed   <- Monthly_TP_WT5 %>% 
+                           select(`Month`, `Year`, `TP_Exceeded`) %>% 
+                           na.omit()
 ```
 
 Analysis : Yearly
@@ -914,12 +999,71 @@ Analysis : Yearly
 
 Yearly Summary:
 ```{r}
-```
+### WT3 ###
+WT3_yearly             <- t(
+                          merge(WT3_FC_Exceeded_count_year, 
+                          merge(WT3_NH_Exceeded_count_year, 
+                          merge(WT3_TN_Exceeded_count_year, 
+                          merge(WT3_NOX_Exceeded_count_year, 
+                          merge(WT3_pH_Exceeded_count_year, 
+                          merge(WT3_TP_Exceeded_count_year, 
+                                WT3_Temp_Exceeded_count_year))))), 
+                          by = "Site"))
 
-Water Quality Index
-```{r}
+WT3_TN_yearly_exceed   <- Yearly_TN_WT3 %>% 
+                          select(`Year`, `TN_Exceeded`) %>% 
+                          na.omit()
+WT3_FC_yearly_exceed   <- Yearly_FC_WT3 %>% 
+                          select(`Year`, `FC_Exceeded`) %>% 
+                          na.omit()
+WT3_NH_yearly_exceed   <- Yearly_NH_WT3 %>% 
+                          select(`Year`, `NH_Exceeded`) %>% 
+                          na.omit()
+WT3_NOX_yearly_exceed  <- Yearly_NOX_WT3 %>% 
+                          select(`Year`, `NOX_Exceeded`) %>% 
+                          na.omit()
+WT3_Temp_yearly_exceed <- Yearly_Temp_WT3 %>% 
+                          select(`Year`, `Temp_Exceeded`) %>% 
+                          na.omit()
+WT3_pH_yearly_exceed   <- Yearly_pH_WT3 %>% 
+                          select(`Year`, `pH_Exceeded`) %>% 
+                          na.omit()
+WT3_TP_yearly_exceed   <- Yearly_TP_WT3 %>% 
+                          select(`Year`, `TP_Exceeded`) %>% 
+                          na.omit()
 
+### WT5 ###
+WT5_yearly             <- t(
+                          merge(WT5_FC_Exceeded_count_day, 
+                          merge(WT5_NH_Exceeded_count_day, 
+                          merge(WT5_TN_Exceeded_count_day, 
+                          merge(WT5_NOX_Exceeded_count_day, 
+                          merge(WT5_pH_Exceeded_count_day, 
+                          merge(WT5_TP_Exceeded_count_day, 
+                                WT5_Temp_Exceeded_count_day))))), 
+                          by = "Site"))
 
+WT5_TN_yearly_exceed   <- Yearly_TN_WT5 %>% 
+                          select(`Year`, `TN_Exceeded`) %>% 
+                          na.omit()
+WT5_FC_yearly_exceed   <- Yearly_FC_WT5 %>% 
+                          select(`Year`, `FC_Exceeded`) %>% 
+                          na.omit()
+WT5_NH_yearly_exceed   <- Yearly_NH_WT5 %>% 
+                          select(`Year`, `NH_Exceeded`) %>% 
+                          na.omit()
+WT5_NOX_yearly_exceed  <- Yearly_NOX_WT5 %>% 
+                          select(`Year`, `NOX_Exceeded`) %>% 
+                          na.omit()
+WT5_Temp_yearly_exceed <- Yearly_Temp_WT5 %>% 
+                          select(`Year`, `Temp_Exceeded`) %>% 
+                          na.omit()
+WT5_pH_yearly_exceed   <- Yearly_pH_WT5 %>% 
+                          select(`Year`, `pH_Exceeded`) %>% 
+                          na.omit()
+WT5_TP_yearly_exceed   <- Yearly_TP_WT5 %>% 
+                          select( `Year`, `TP_Exceeded`) %>% 
+                          na.omit()
 ```
 
 
