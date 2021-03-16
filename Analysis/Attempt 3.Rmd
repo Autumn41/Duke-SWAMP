@@ -128,6 +128,14 @@ SWAMP_means_medians <- SWAMP_means_medians %>%
   replace_with_na(replace = list(Median_TP = "NaN"))%>% 
   replace_with_na(replace = list(Median_NH = "NaN")) 
 
+observed_count2 <-SWAMP_means_medians2 %>%
+  group_by(Site) %>% 
+  summarize(TN_count = sum(!is.na(Mean_TN)),
+            NH_count = sum(!is.na(Mean_NH)),
+            TP_count = sum(!is.na(Mean_TP)),
+            Temp_count = sum(!is.na(Mean_Temp)),
+            pH_count = sum(!is.na(Mean_pH)),
+            FC_count = sum(!is.na(Mean_FC)))
 
 ```
 
