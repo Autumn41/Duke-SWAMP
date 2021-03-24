@@ -1,0 +1,585 @@
+---
+title: "Question 1_Clean"
+author: "Autumn Dunn"
+date: "3/23/2021"
+output: pdf_document
+---
+
+Packages Needed
+```{r}
+if(!require(pacman))install.packages("pacman")
+
+pacman::p_load(ggpubr, ggplot2, readxl, tidyverse, dplyr, lubridate, here, pkgcond, naniar, arsenal, gam,
+               trend, zoo, Kendall)
+```
+
+Upload Data
+```{r}
+Nitrogen             <- read_excel(here("Data/Nitrogen.xlsx"))
+Phosphorus           <- read_excel(here("Data/Phosphorus.xlsx"))
+TotalSuspendedSolids <- read_excel(here("Data/TotalSuspendedSolids.xlsx"))
+YSI                  <- read_excel(here("Data/YSI.xlsx"))
+FecalColiform        <- read_excel(here("Data/FecalColiform.xlsx"))
+```
+
+Water Quality Variable Function
+```{r}
+#Time Inputs:
+  # time = "day" --> daily mean
+  # time = "month" --> monthly mean
+  # time = "year" --> yearly mean
+  # time = " " --> process data
+
+#WQV inputs:
+  #select any column within list:
+    # "Total N (ug/L)" | "NH4-N (ug/L)" | "NOX" | "UTP" | "FC" | "pH" | "Temp C" | "TSS (mg/L)"
+    # note these names are based on names assigned to data
+    # can include more or less variables in the process data step of function
+
+WQV_time <- function(df, WQV, time) { 
+    #Fix days that will not be read as date
+    fix_day <- Vectorize(
+             function(day) {
+              if (day %in% 1:9) 
+              return(paste0("0", day))
+              return(day) })
+    #Process data
+    df1  <- df %>% 
+            select(any_of(c("Total N (ug/L)", "TN", "NH", "NH4-N (ug/L)", "NOX", "UTP", "TP", "FC", "pH", "Temp C", "TSS (mg/L)", "TSS", "Month", "Day", "Year", "Site")))
+    #Sort data for only WQV of interest
+    df1 <- df1 %>% 
+           select(`Site`, `Day`,`Month`, `Year`, `WQV`) %>% 
+           na.omit() %>% 
+           mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-")))
+  
+if (time == "day") {
+  #Determine daily mean                
+  df2  <-aggregate(df1[, 5], list(df1$`Year`, df1$`Month`, df1$`Day`, df1$`Site`), mean)
+    #Rename columns
+    oldnames2<-c(colnames(df2))
+    newnames2<-c("Year", "Month", "Day", "Site", "Daily.Mean")
+    df2 <- df2 %>% 
+           rename_at(vars(oldnames2), ~ newnames2) 
+  return(df2)}
+  
+  if (time == "month") { 
+  #Determine monthly mean                
+  df3  <-aggregate(df1[, 5], list(df1$`Year`, df1$`Month`, df1$`Site`), mean)
+    #Rename columns
+    oldnames3<-c(colnames(df3))
+    newnames3<-c("Year", "Month", "Site", "Monthly.Mean")
+    df3 <- df3 %>% 
+           rename_at(vars(oldnames3), ~ newnames3)
+return(df3)}
+  
+if (time == "year") {
+  #Determine yearly mean                
+  df4  <-aggregate(df1[, 5], list(df1$`Year`, df1$`Site`), mean)
+    #Rename columns
+    oldnames4<-c(colnames(df4))
+    newnames4<-c("Year", "Site", "Yearly.Mean")
+    df4 <- df4 %>% 
+           rename_at(vars(oldnames4), ~ newnames4)
+return(df4)}
+
+  else {return(df1)} }
+```
+
+
+
+Estimating Missing Data Function
+```{r}
+#Time Inputs:
+  # time = "day" --> Estimate daily mean for missing days using linear interpolation
+  # time = "month" --> Estimate monthly mean for missing months using linear interpolation
+
+# # use injunction with Water Quality Variable Function # #
+    # Water quality variable must already been selected from previous function
+    # Water quality variable must have a daily or monthly mean already estimated from previous function
+
+Fix_Missing_Data <- function(df, time) { 
+    #Fix days that will not be read as date
+    fix_day <- Vectorize(
+                function(day) {
+                  if (day %in% 1:9) 
+                  return(paste0("0", day))
+                  return(day) })
+  
+ if (time == "day") {
+  #Daily
+  df1 <- df %>% ungroup() %>% 
+                mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                select(`Date`, Daily.Mean) %>% 
+                na.omit() 
+  
+OrderedDates1 <- df1[rev(order(as.Date(df1$Date))),]
+
+start_date1 <- date(last(OrderedDates1$Date))
+end_date1 <- date(first(OrderedDates1$Date))
+
+days  <- as.data.frame( x = seq(start_date1, end_date1, "day")) %>% 
+  set_names(c("Date"))
+
+JoinDates1      <- left_join(x = days, y = df1)
+
+# Adding new column with no missing obs
+df1 <- JoinDates1 %>% 
+              mutate( Clean.Daily.Mean = zoo::na.approx(Daily.Mean) ) %>% 
+              select(Date, Clean.Daily.Mean)
+return(df1)}
+
+if (time == "month") {
+  #Monthly
+    df2 <- df %>% ungroup() %>%
+              mutate(Day = 1) %>% 
+              mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+              select(Date, Monthly.Mean) %>% 
+              na.omit() 
+  
+OrderedDates2 <- df2[rev(order(as.Date(df2$Date))),]
+
+start_date2 <- date(last(OrderedDates2$Date))
+end_date2 <- date(first(OrderedDates2$Date))
+
+months  <- as.data.frame( x = seq(start_date2, end_date2, "month")) %>% 
+  set_names(c("Date"))
+
+JoinDates2      <- left_join(x = months, y = df2)
+
+# Adding new column with no missing obs
+df2 <- JoinDates2 %>% 
+              mutate( Clean.Monthly.Mean = zoo::na.approx(Monthly.Mean) ) %>% 
+              select(Date, Clean.Monthly.Mean)
+return(df2) }
+   
+  else {print("input time as day or month")}}
+```
+
+Test if Water Quality Variable Exceeds Standard function
+```{r}
+#WQ inputs:
+  # WQ = TN --> total nitrogen
+  # WQ = NH --> ammonium
+  # WQ = NOX --> nitrous oxide
+  # WQ = FC --> fecal coliform
+  # WQ = Temp --> temperature
+  # WQ = pH --> pH
+  # WQ = TP --> total phosphorus
+  # WQ = TSS --> total suspended solids
+
+#Time inputs:
+  # time = "day" --> compares daily means to water quality standard
+  # time = "month" --> compares monthly means to water quality standard
+  # time = "year" --> compares yearly means to water quality standard
+
+#Type inputs:
+  # type = "dates" --> outputs new column with data exceeding water quality standard
+    # dates are still included, though dependent on time input selected
+  # type = "counts" --> outputs count of times water quality was exceeded and counts all observations
+
+Exceedence <- function(df, WQ, time, type) {
+  
+if (WQ == "TN") {
+  if (time == "day") { 
+    if (type == "dates") {
+        df1 <- df %>% 
+               mutate(TN_Exceeded = ifelse(Daily.Mean > 800, Daily.Mean, NA)) 
+        return(df1)}
+    if (type == "counts") {
+        df1 <- df %>% 
+               mutate(TN_Exceeded = ifelse(Daily.Mean > 800, Daily.Mean, NA)) 
+        df2 <- df1 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_TN = sum(!is.na(TN_Exceeded)), 
+                         Count_all_TN = sum(!is.na(Daily.Mean)))
+        return(df2)}
+  }
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(TN_Exceeded = ifelse(Monthly.Mean > 800, Monthly.Mean, NA))
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(TN_Exceeded = ifelse(Monthly.Mean > 800, Monthly.Mean, NA))
+        df4 <- df3 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_TN = sum(!is.na(TN_Exceeded)), 
+                         Count_all_TN = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(TN_Exceeded = ifelse(Yearly.Mean > 800, Yearly.Mean, NA))
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(TN_Exceeded = ifelse(Yearly.Mean > 800, Yearly.Mean, NA))
+        df6 <- df5 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_TN = sum(!is.na(TN_Exceeded)), 
+                         Count_all_TN = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+
+if (WQ == "NH") {
+  if (time == "day") { 
+    if (type == "dates") {
+        df1 <- df %>% 
+               mutate(NH_Exceeded = ifelse(Daily.Mean > 20, Daily.Mean, NA))
+        return(df1)}
+    if (type == "counts") {
+        df1 <- df %>% 
+               mutate(NH_Exceeded = ifelse(Daily.Mean > 20, Daily.Mean, NA))
+        df2 <- df1 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_NH = sum(!is.na(NH_Exceeded)), 
+                         Count_all_NH = sum(!is.na(Daily.Mean)))
+        return(df2)}
+  }
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(NH_Exceeded = ifelse(Monthly.Mean > 20, Monthly.Mean, NA))
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(NH_Exceeded = ifelse(Monthly.Mean > 20, Monthly.Mean, NA))
+        df4 <- df3 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_NH = sum(!is.na(NH_Exceeded)), 
+                         Count_all_NH = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(NH_Exceeded = ifelse(Yearly.Mean > 20, Yearly.Mean, NA))
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(NH_Exceeded = ifelse(Yearly.Mean > 20, Yearly.Mean, NA))
+        df6 <- df5 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_NH = sum(!is.na(NH_Exceeded)), 
+                         Count_all_NH = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+
+if (WQ == "NOX") {
+  if (time == "day") { 
+    if (type == "dates") {
+        df1 <- df %>% 
+               mutate(NOX_Exceeded = ifelse(Daily.Mean > 345, Daily.Mean, NA))
+        return(df1)}
+    if (type == "counts") {
+        df1 <- df %>% 
+               mutate(NOX_Exceeded = ifelse(Daily.Mean > 345, Daily.Mean, NA))
+        df2 <- df1 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_NOX = sum(!is.na(NOX_Exceeded)), 
+                         Count_all_NOX = sum(!is.na(Daily.Mean)))
+        return(df2)}
+  }
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(NOX_Exceeded = ifelse(Monthly.Mean > 345, Monthly.Mean, NA))
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(NOX_Exceeded = ifelse(Monthly.Mean > 345, Monthly.Mean, NA))
+        df4 <- df3 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_NOX = sum(!is.na(NOX_Exceeded)), 
+                         Count_all_NOX = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(NOX_Exceeded = ifelse(Yearly.Mean > 345, Yearly.Mean, NA))
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(NOX_Exceeded = ifelse(Yearly.Mean > 345, Yearly.Mean, NA))
+        df6 <- df5 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_NOX = sum(!is.na(NOX_Exceeded)), 
+                         Count_all_NOX = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+
+if (WQ == "pH") {
+  if (time == "day") { 
+    if (type == "dates") {
+        df1 <- df %>% 
+               mutate(pH_Exceeded = ifelse(!(Daily.Mean >6) & !(Daily.Mean < 9), Daily.Mean, NA))
+        return(df1)}
+    if (type == "counts") {
+        df1 <- df %>% 
+               mutate(pH_Exceeded = ifelse(!(Daily.Mean >6) & !(Daily.Mean < 9), Daily.Mean, NA))
+        df2 <- df1 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_pH = sum(!is.na(pH_Exceeded)), 
+                         Count_all_pH = sum(!is.na(Daily.Mean)))
+        return(df2)}
+  }
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(pH_Exceeded = ifelse(!(Monthly.Mean >6) & !(Monthly.Mean < 9), Monthly.Mean, NA))
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(pH_Exceeded = ifelse(!(Monthly.Mean >6) & !(Monthly.Mean < 9), Monthly.Mean, NA))
+        df4 <- df3 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_pH = sum(!is.na(pH_Exceeded)), 
+                         Count_all_pH = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(pH_Exceeded = ifelse(!(Yearly.Mean >6) & !(Yearly.Mean < 9), Yearly.Mean, NA))
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(pH_Exceeded = ifelse(!(Yearly.Mean >6) & !(Yearly.Mean < 9), Yearly.Mean, NA))
+        df6 <- df5 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_pH = sum(!is.na(pH_Exceeded)), 
+                         Count_all_pH = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+
+if (WQ == "Temp") {
+  if (time == "day") {
+    if (type == "dates") {
+        df1 <- df %>% 
+               mutate(Temp_Exceeded = ifelse(Daily.Mean > 32, Daily.Mean, NA))
+        return(df1)}
+    if (type == "counts") {
+        df1 <- df %>% 
+               mutate(Temp_Exceeded = ifelse(Daily.Mean > 32, Daily.Mean, NA))
+        df2 <- df1 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_Temp = sum(!is.na(Temp_Exceeded)), 
+                         Count_all_Temp = sum(!is.na(Daily.Mean)))
+        return(df2)}
+  }
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(Temp_Exceeded = ifelse(Monthly.Mean > 32, Monthly.Mean, NA))
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(Temp_Exceeded = ifelse(Monthly.Mean > 32, Monthly.Mean, NA))
+        df4 <- df3 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_Temp = sum(!is.na(Temp_Exceeded)), 
+                         Count_all_Temp = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(Temp_Exceeded = ifelse(Yearly.Mean > 32, Yearly.Mean, NA))
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(Temp_Exceeded = ifelse(Yearly.Mean > 32, Yearly.Mean, NA))
+        df6 <- df5 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_Temp = sum(!is.na(Temp_Exceeded)), 
+                         Count_all_Temp = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+  
+if (WQ == "TP") {
+  if (time == "day") {
+    if (type == "dates") {
+        df1 <- df %>% 
+               mutate(TP_Exceeded = ifelse(Daily.Mean > 30, Daily.Mean, NA)) 
+        return(df1)}
+    if (type == "counts") {
+        df1 <- df %>% 
+               mutate(TP_Exceeded = ifelse(Daily.Mean > 30, Daily.Mean, NA)) 
+        df2 <- df1 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_TP = sum(!is.na(TP_Exceeded)), 
+                         Count_all_TP = sum(!is.na(Daily.Mean)))
+        return(df2)}
+  }
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(TP_Exceeded = ifelse(Monthly.Mean > 30, Monthly.Mean, NA)) 
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(TP_Exceeded = ifelse(Monthly.Mean > 30, Monthly.Mean, NA)) 
+        df4 <- df3 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_TP = sum(!is.na(TP_Exceeded)), 
+                         Count_all_TP = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(TP_Exceeded = ifelse(Yearly.Mean > 30, Yearly.Mean, NA)) 
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(TP_Exceeded = ifelse(Yearly.Mean > 30, Yearly.Mean, NA)) 
+        df6 <- df5 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_TP = sum(!is.na(TP_Exceeded)), 
+                         Count_all_TP = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+  
+if (WQ == "FC") {
+  if (time == "day") {
+    if (type == "dates") {
+        df1 <- df %>% 
+               mutate(FC_Exceeded = ifelse(Daily.Mean > 200, Daily.Mean, NA))
+        return(df1)}
+    if (type == "counts") {
+        df1 <- df %>% 
+               mutate(FC_Exceeded = ifelse(Daily.Mean > 200, Daily.Mean, NA))
+        df2 <- df1 %>% 
+               group_by(Site) %>%
+               summarize(count_exceed_FC = sum(!is.na(FC_Exceeded)), 
+                         Count_all_FC = sum(!is.na(Daily.Mean)))
+        return(df2)}
+  }
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(FC_Exceeded = ifelse(Monthly.Mean > 200, Monthly.Mean, NA))
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(FC_Exceeded = ifelse(Monthly.Mean > 200, Monthly.Mean, NA))
+        df4 <- df3 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_FC = sum(!is.na(FC_Exceeded)), 
+                         Count_all_FC = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(FC_Exceeded = ifelse(Yearly.Mean > 200, Yearly.Mean, NA))
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(FC_Exceeded = ifelse(Yearly.Mean > 200, Yearly.Mean, NA))
+        df6 <- df5 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_FC = sum(!is.na(FC_Exceeded)), 
+                         Count_all_FC = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+  
+if (WQ == "TSS") {
+  if (time == "day") {
+    if (type == "dates") {
+        print("Can not process")
+  }
+    if (type == "counts") {
+        print("Can not process")
+  }}
+  if (time == "month") {
+    if (type == "dates") {
+        df3 <- df %>% 
+               mutate(TSS_Exceeded = ifelse(Monthly.Mean > 30, Monthly.Mean, NA))
+        return(df3)}
+    if (type == "counts") {
+        df3 <- df %>% 
+               mutate(TSS_Exceeded = ifelse(Monthly.Mean > 30, Monthly.Mean, NA))
+        df4 <- df3 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_TSS = sum(!is.na(TSS_Exceeded)), 
+                         Count_all_TSS = sum(!is.na(Monthly.Mean)))
+        return(df4)}
+  }
+  if (time == "year") {
+    if (type == "dates") {
+        df5 <- df %>% 
+               mutate(TSS_Exceeded = ifelse(Yearly.Mean > 30, Yearly.Mean, NA))
+        return(df5)}
+    if (type == "counts") {
+        df5 <- df %>% 
+               mutate(TSS_Exceeded = ifelse(Yearly.Mean > 30, Yearly.Mean, NA))
+        df6 <- df5 %>% 
+               group_by(Site)  %>%
+               summarize(count_exceed_TSS = sum(!is.na(TSS_Exceeded)), 
+                         Count_all_TSS = sum(!is.na(Yearly.Mean)))
+        return(df6)}
+  }
+}
+}
+```
+
+
+Generature Time Series Function
+```{r}
+TimeSeries <- function(df, output, seasonal) {
+if (seasonal == "yes") {
+month   <- month(first(df$Date))
+year    <- year(first(df$Date))
+
+month.ts <- ts(df$Clean.Monthly.Mean,
+                 start=c(year,month),
+                 frequency=12) 
+#decompose
+decomp <- stl(month.ts, s.window = "periodic")
+seasonReport <- Kendall::SeasonalMannKendall(month.ts)
+# Extract the components and turn them into data frames
+Components <- as.data.frame(decomp$time.series[,1:3])
+Components <- mutate(Components,
+                      Observed = df$Clean.Monthly.Mean,     
+                      Date = df$Date)
+  if (output == "data") {return(month.ts)}
+  if (output == "summary") {summary(seasonReport)}
+  if (output == "component") {return(Components)} }
+if (seasonal == "no") {
+month   <- month(first(df$Date))
+year    <- year(first(df$Date))
+
+month.ts <- ts(df$Clean.Monthly.Mean,
+                 start=c(year,month),
+                 frequency=12) 
+#decompose
+decomp <- stl(month.ts, s.window = "periodic")
+seasonReport <- Kendall::SeasonalMannKendall(month.ts)
+# Extract the components and turn them into data frames
+Components <- as.data.frame(decomp$time.series[,1:3])
+Components <- mutate(Components,
+                      Observed = df$Clean.Monthly.Mean,     
+                      Date = df$Date)
+# Extract Seasonality
+Nonseasonal <- month.ts  - Components$seasonal
+NonseasonalReport <- Kendall::MannKendall(Nonseasonal)
+  if (output == "data") {return(Nonseasonal)}
+  if (output == "summary") {summary(NonseasonalReport)}
+  if (output == "component") {print("There are no components")}
+  }
+}
+```
+
+
+

@@ -1,0 +1,345 @@
+---
+title: "Final"
+author: "Autumn Dunn"
+date: "3/23/2021"
+output: pdf_document
+---
+
+
+## Functions used located in `Functions` rmd file ##
+
+Background Information:
+
+####  Water Quality Standards ####
+
+Variables:
+- Nitrogen (NOx, TN, NH)
+  (TN - Total Nitrogen) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont): 800 ug/L 
+  (NH - Ammonium) EPA standard for NH: 20 ug/L
+  (NOx - Nitrous Oxide) EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont: 345 ug/L
+- Phosphorus (TP - Total Phosphorus)
+    EPA Nutrient Ecoregion IX Level III Ecogeion 45 (Piedmont): 30 ug/L
+- Fecal Coliform (FC)
+    State of NC water quality criteria: 200 colonies/100 mL
+- Temperature (Temp)
+    NCDENR/DWQ standard for lower Piedmont, non-trout streams: < 32 C
+- pH
+    NC water quality standard: 6-9
+- Sediment (TSS)
+    EPA standard for TSS for 30-day average: 30,000 ug/L
+    EPA standard for TSS for 7-day average: 45,000 ug/L
+
+####                          ####
+
+###    About SWAMP    ###
+
+SWAMP Information:
+- Inflow:
+    Phase 1 -- WT1
+- Outflow:
+    Phase 2 -- WT3
+            -- WT5
+    
+Phase Details:
+- Phase 1 = stream reconfigutation
+- Phase 2 = dam and impoundment
+
+Site Details:
+- WT1 = Downstream of culvert at HWY 751, CONTROL SITE
+- WT3 = Upstream of sewer line
+- WT5 = Upstream of old dam structure within retention basin of concrete dam, IMPACT SITE
+
+###                   ###
+
+
+Packages Needed
+```{r}
+if(!require(pacman))install.packages("pacman")
+
+pacman::p_load(ggpubr, ggplot2, readxl, tidyverse, dplyr, lubridate, here, pkgcond, naniar, arsenal, gam,
+               trend, zoo, Kendall)
+```
+
+Upload Data
+```{r}
+Nitrogen             <- read_excel(here("Data/Nitrogen.xlsx"))
+Phosphorus           <- read_excel(here("Data/Phosphorus.xlsx"))
+TotalSuspendedSolids <- read_excel(here("Data/TotalSuspendedSolids.xlsx"))
+YSI                  <- read_excel(here("Data/YSI.xlsx"))
+FecalColiform        <- read_excel(here("Data/FecalColiform.xlsx"))
+```
+
+Processing Data
+```{r}
+#combine and isolate SWAMP data
+SWAMP_data         <- bind_rows((Nitrogen), Phosphorus, (FecalColiform), (TotalSuspendedSolids), (YSI))
+
+#make pH and Temperature numeric
+SWAMP_data$pH      <- as.numeric(SWAMP_data$pH)
+SWAMP_data$`Temp C`<- as.numeric(SWAMP_data$`Temp C`)
+```
+
+Question 1: How does SWAMP water quality compare to water quality standards?
+```{r}
+
+
+
+
+```
+
+Question 2: How effective is SWAMP in water quality treatment?
+```{r}
+#Model 1 - Compare WT1 to WT3
+Model1_TN <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model1_NH <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model1_NOX <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model1_TP <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model1_FC <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model1_Temp <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model1_pH <- gam(data= , formula = (( ) ~ s(Date) + `Site`), family = gaussian)
+Model1_TSS <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+
+#Model 2 - Compare WT1 to WT5
+Model2_TN <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model2_NH <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model2_NOX <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model2_TP <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model2_FC <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model2_Temp <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+Model2_pH <- gam(data= , formula = (( ) ~ s(Date) + `Site`), family = gaussian)
+Model2_TSS <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+```
+
+Question 3: What are the seasonal trends of SWAMP?
+
+WT1
+```{r}
+#Clean data for Time Series
+WT1_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("WT1")) %>% 
+             filter(Year %in% c(2008:2020))
+
+
+clean_WT1_TN <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "Total N (ug/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT1_NH <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "NH4-N (ug/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT1_NOX <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "NOX", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT1_TP <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "UTP", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT1_FC <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "FC", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT1_pH <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "pH", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT1_Temp <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "Temp C", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT1_TSS <- WT1_SWAMP %>% 
+             WQV_time(., WQV = "TSS (mg/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+
+# Generate time series
+ts_WT1_TN          <-TimeSeries(clean_WT1_TN, output = "data", seasonal = "yes")
+ts_WT1_Temp        <-TimeSeries(clean_WT1_Temp, output = "data", seasonal = "yes")
+ts_WT1_TP          <-TimeSeries(clean_WT1_TP, output = "data", seasonal = "yes")
+ts_WT1_NOX         <-TimeSeries(clean_WT1_NOX, output = "data", seasonal = "yes")
+ts_WT1_FC          <-TimeSeries(clean_WT1_FC, output = "data", seasonal = "yes")
+ts_WT1_TSS         <-TimeSeries(clean_WT1_TSS, output = "data", seasonal = "yes")
+ts_WT1_pH          <-TimeSeries(clean_WT1_pH, output = "data", seasonal = "yes")
+ts_WT1_NH          <-TimeSeries(clean_WT1_NH, output = "data", seasonal = "yes")
+
+# Generate Non-seasonal time series
+nts_WT1_TN          <-TimeSeries(clean_WT1_TN, output = "data", seasonal = "no")
+nts_WT1_Temp        <-TimeSeries(clean_WT1_Temp, output = "data", seasonal = "no")
+nts_WT1_TP          <-TimeSeries(clean_WT1_TP, output = "data", seasonal = "no")
+nts_WT1_NOX         <-TimeSeries(clean_WT1_NOX, output = "data", seasonal = "no")
+nts_WT1_FC          <-TimeSeries(clean_WT1_FC, output = "data", seasonal = "no")
+nts_WT1_TSS         <-TimeSeries(clean_WT1_TSS, output = "data", seasonal = "no")
+nts_WT1_pH          <-TimeSeries(clean_WT1_pH, output = "data", seasonal = "no")
+nts_WT1_NH          <-TimeSeries(clean_WT1_NH, output = "data", seasonal = "no")
+
+# Seasonal Summary
+TimeSeries(clean_WT1_TN, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT1_Temp, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT1_TP, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT1_NOX, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT1_FC, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT1_TSS, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT1_pH, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT1_NH, output = "summary", seasonal = "yes")
+
+# Non-Seasonal Summary
+TimeSeries(clean_WT1_TN, output = "summary", seasonal = "no")
+TimeSeries(clean_WT1_Temp, output = "summary", seasonal = "no")
+TimeSeries(clean_WT1_TP, output = "summary", seasonal = "no")
+TimeSeries(clean_WT1_NOX, output = "summary", seasonal = "no")
+TimeSeries(clean_WT1_FC, output = "summary", seasonal = "no")
+TimeSeries(clean_WT1_TSS, output = "summary", seasonal = "no")
+TimeSeries(clean_WT1_pH, output = "summary", seasonal = "no")
+TimeSeries(clean_WT1_NH, output = "summary", seasonal = "no")
+```
+
+WT3
+```{r}
+#Clean data for Time Series
+WT3_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("WT3")) %>% 
+             filter(Year %in% c(2008:2020))
+
+
+clean_WT3_TN <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "Total N (ug/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT3_NH <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "NH4-N (ug/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT3_NOX <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "NOX", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT3_TP <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "UTP", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT3_FC <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "FC", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT3_pH <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "pH", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT3_Temp <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "Temp C", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT3_TSS <- WT3_SWAMP %>% 
+             WQV_time(., WQV = "TSS (mg/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+
+# Generate time series
+ts_WT3_TN          <-TimeSeries(clean_WT3_TN, output = "data", seasonal = "yes")
+ts_WT3_Temp        <-TimeSeries(clean_WT3_Temp, output = "data", seasonal = "yes")
+ts_WT3_TP          <-TimeSeries(clean_WT3_TP, output = "data", seasonal = "yes")
+ts_WT3_NOX         <-TimeSeries(clean_WT3_NOX, output = "data", seasonal = "yes")
+ts_WT3_FC          <-TimeSeries(clean_WT3_FC, output = "data", seasonal = "yes")
+ts_WT3_TSS         <-TimeSeries(clean_WT3_TSS, output = "data", seasonal = "yes")
+ts_WT3_pH          <-TimeSeries(clean_WT3_pH, output = "data", seasonal = "yes")
+ts_WT3_NH          <-TimeSeries(clean_WT3_NH, output = "data", seasonal = "yes")
+
+# Generate Non-seasonal time series
+nts_WT3_TN          <-TimeSeries(clean_WT3_TN, output = "data", seasonal = "no")
+nts_WT3_Temp        <-TimeSeries(clean_WT3_Temp, output = "data", seasonal = "no")
+nts_WT3_TP          <-TimeSeries(clean_WT3_TP, output = "data", seasonal = "no")
+nts_WT3_NOX         <-TimeSeries(clean_WT3_NOX, output = "data", seasonal = "no")
+nts_WT3_FC          <-TimeSeries(clean_WT3_FC, output = "data", seasonal = "no")
+nts_WT3_TSS         <-TimeSeries(clean_WT3_TSS, output = "data", seasonal = "no")
+nts_WT3_pH          <-TimeSeries(clean_WT3_pH, output = "data", seasonal = "no")
+nts_WT3_NH          <-TimeSeries(clean_WT3_NH, output = "data", seasonal = "no")
+
+# Seasonal Summary
+TimeSeries(clean_WT3_TN, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT3_Temp, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT3_TP, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT3_NOX, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT3_FC, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT3_TSS, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT3_pH, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT3_NH, output = "summary", seasonal = "yes")
+
+# Non-Seasonal Summary
+TimeSeries(clean_WT3_TN, output = "summary", seasonal = "no")
+TimeSeries(clean_WT3_Temp, output = "summary", seasonal = "no")
+TimeSeries(clean_WT3_TP, output = "summary", seasonal = "no")
+TimeSeries(clean_WT3_NOX, output = "summary", seasonal = "no")
+TimeSeries(clean_WT3_FC, output = "summary", seasonal = "no")
+TimeSeries(clean_WT3_TSS, output = "summary", seasonal = "no")
+TimeSeries(clean_WT3_pH, output = "summary", seasonal = "no")
+TimeSeries(clean_WT3_NH, output = "summary", seasonal = "no")
+```
+
+WT5
+```{r}
+#Clean data for Time Series
+WT5_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("WT5")) %>% 
+             filter(Year %in% c(2008:2020))
+
+
+clean_WT5_TN <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "Total N (ug/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT5_NH <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "NH4-N (ug/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT5_NOX <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "NOX", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT5_TP <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "UTP", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT5_FC <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "FC", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT5_pH <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "pH", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT5_Temp <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "Temp C", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+clean_WT5_TSS <- WT5_SWAMP %>% 
+             WQV_time(., WQV = "TSS (mg/L)", time = "month") %>% 
+             Fix_Missing_Data(., time = "month")
+
+# Generate time series
+ts_WT5_TN          <-TimeSeries(clean_WT5_TN, output = "data", seasonal = "yes")
+ts_WT5_Temp        <-TimeSeries(clean_WT5_Temp, output = "data", seasonal = "yes")
+ts_WT5_TP          <-TimeSeries(clean_WT5_TP, output = "data", seasonal = "yes")
+ts_WT5_NOX         <-TimeSeries(clean_WT5_NOX, output = "data", seasonal = "yes")
+ts_WT5_FC          <-TimeSeries(clean_WT5_FC, output = "data", seasonal = "yes")
+ts_WT5_TSS         <-TimeSeries(clean_WT5_TSS, output = "data", seasonal = "yes")
+ts_WT5_pH          <-TimeSeries(clean_WT5_pH, output = "data", seasonal = "yes")
+ts_WT5_NH          <-TimeSeries(clean_WT5_NH, output = "data", seasonal = "yes")
+
+# Generate Non-seasonal time series
+nts_WT5_TN          <-TimeSeries(clean_WT5_TN, output = "data", seasonal = "no")
+nts_WT5_Temp        <-TimeSeries(clean_WT5_Temp, output = "data", seasonal = "no")
+nts_WT5_TP          <-TimeSeries(clean_WT5_TP, output = "data", seasonal = "no")
+nts_WT5_NOX         <-TimeSeries(clean_WT5_NOX, output = "data", seasonal = "no")
+nts_WT5_FC          <-TimeSeries(clean_WT5_FC, output = "data", seasonal = "no")
+nts_WT5_TSS         <-TimeSeries(clean_WT5_TSS, output = "data", seasonal = "no")
+nts_WT5_pH          <-TimeSeries(clean_WT5_pH, output = "data", seasonal = "no")
+nts_WT5_NH          <-TimeSeries(clean_WT5_NH, output = "data", seasonal = "no")
+
+# Seasonal Summary
+TimeSeries(clean_WT5_TN, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT5_Temp, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT5_TP, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT5_NOX, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT5_FC, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT5_TSS, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT5_pH, output = "summary", seasonal = "yes")
+TimeSeries(clean_WT5_NH, output = "summary", seasonal = "yes")
+
+# Non-Seasonal Summary
+TimeSeries(clean_WT5_TN, output = "summary", seasonal = "no")
+TimeSeries(clean_WT5_Temp, output = "summary", seasonal = "no")
+TimeSeries(clean_WT5_TP, output = "summary", seasonal = "no")
+TimeSeries(clean_WT5_NOX, output = "summary", seasonal = "no")
+TimeSeries(clean_WT5_FC, output = "summary", seasonal = "no")
+TimeSeries(clean_WT5_TSS, output = "summary", seasonal = "no")
+TimeSeries(clean_WT5_pH, output = "summary", seasonal = "no")
+TimeSeries(clean_WT5_NH, output = "summary", seasonal = "no")
+```
+
+Time Series Analysis - Comparisons
+```{r}
+#compare WT1 to WT5
+
+
+#compare WT1 to WT3
+
+```
+

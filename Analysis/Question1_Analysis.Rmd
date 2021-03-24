@@ -19,11 +19,11 @@ Contents:
   -    Monthly Summary
   -    Analysis : Yearly
   -    Yearly Summary
-  -    Water Quality Index
+  -    
 
 Summary:
 
-  The goal of this portion of the analysis is to determine if SWAMP met the water quality standard goals. This was done by comparing outflow sites to water quality standards defined below in the water quality standards section. Outflow sites for SWAMP were identified as WT3 and WT5. WT2 was also considered an outflow site, but removed from this portion of the analysis due to limited data and relocation in 2011. Sampling period of analysis was after Phase I, II, and III establishment and was from 2008 to 2020. This is an update to Richardson (2011) paper located in relevant literature folder, so this analysis is considered the updated assessment of SWAMP through long-term monitoring that has continued since the publication of the paper. Water quality standards were compared on a daily, monthly, and yearly basis for all water quality parameters except total suspended solids. A water quality index was created using a harmonic square water quality index, which is unweighted and is the most sensistive index. Water quality index provides a simplified way to assess water quality at each location and time based on the eight water quality parameters of interest.
+  The goal of this portion of the analysis is to determine if SWAMP met the water quality standard goals. This was done by comparing outflow sites to water quality standards defined below in the water quality standards section. Outflow sites for SWAMP were identified as WT3 and WT5. WT2 was also considered an outflow site, but removed from this portion of the analysis due to limited data and relocation in 2011. Sampling period of analysis was after Phase I, II, and III establishment and was from 2008 to 2020. This is an update to Richardson (2011) paper located in relevant literature folder, so this analysis is considered the updated assessment of SWAMP through long-term monitoring that has continued since the publication of the paper. Water quality standards were compared on a daily, monthly, and yearly basis for all water quality parameters. 
 
 Data for this analysis is located in the Data folder and is called upon in the code.
 
@@ -959,7 +959,7 @@ Analysis : Yearly
                                   summarize(count_exceed_FC = sum(!is.na(FC_Exceeded)),
                                   Count_all_FC = sum(!is.na(Mean_FC)))
 
-### count how many months exceed water quality standard for WT5 ###
+### count how many years exceed water quality standard for WT5 ###
 #TN
   WT5_TN_Exceeded_count_year   <- Yearly_TN_WT5 %>% 
                                   group_by(Site) %>%
@@ -1034,13 +1034,13 @@ WT3_TP_yearly_exceed   <- Yearly_TP_WT3 %>%
 
 ### WT5 ###
 WT5_yearly             <- t(
-                          merge(WT5_FC_Exceeded_count_day, 
-                          merge(WT5_NH_Exceeded_count_day, 
-                          merge(WT5_TN_Exceeded_count_day, 
-                          merge(WT5_NOX_Exceeded_count_day, 
-                          merge(WT5_pH_Exceeded_count_day, 
-                          merge(WT5_TP_Exceeded_count_day, 
-                                WT5_Temp_Exceeded_count_day))))), 
+                          merge(WT5_FC_Exceeded_count_year, 
+                          merge(WT5_NH_Exceeded_count_year, 
+                          merge(WT5_TN_Exceeded_count_year, 
+                          merge(WT5_NOX_Exceeded_count_year, 
+                          merge(WT5_pH_Exceeded_count_year, 
+                          merge(WT5_TP_Exceeded_count_year, 
+                                WT5_Temp_Exceeded_count_year))))), 
                           by = "Site"))
 
 WT5_TN_yearly_exceed   <- Yearly_TN_WT5 %>% 
@@ -1065,6 +1065,110 @@ WT5_TP_yearly_exceed   <- Yearly_TP_WT5 %>%
                           select( `Year`, `TP_Exceeded`) %>% 
                           na.omit()
 ```
+
+Total Suspended Solids (TSS)
+    EPA standard for TSS for 30-day average: 30,000 ug/L or 30 mg/L
+    EPA standard for TSS for 7-day average: 45,000 ug/L or 45 mg/L
+```{r}
+#WT3
+  TSS_WT3_month     <- SWAMP_data %>% 
+                       filter(Site %in% c("WT3")) %>% 
+                       filter(Year %in% c(2008:2020)) %>% 
+                       select(`Site`, `Month`, `Year`, `TSS (mg/L)`) %>% 
+                       na.omit()
+  Monthly_TSS_WT3   <- TSS_WT3_month %>% 
+                       group_by(`Site`, `Year`, `Month`) %>% 
+                       summarise(Mean_TSS = mean(`TSS (mg/L)`)) %>% 
+                       group_by(`Site`, `Year`, `Month`) %>% 
+                       mutate(TSS_Exceeded = ifelse(Mean_TSS > 30, Mean_TSS, NA))
+  TSS_WT3_year      <- SWAMP_data %>% 
+                       filter(Site %in% c("WT3")) %>% 
+                       filter(Year %in% c(2008:2020)) %>% 
+                       select(`Site`, `Year`, `TSS (mg/L)`) %>% 
+                       na.omit()
+  Yearly_TSS_WT3    <- TSS_WT3_year %>% 
+                       group_by(`Site`, `Year`) %>% 
+                       summarise(Mean_TSS = mean(`TSS (mg/L)`)) %>% 
+                       group_by(`Site`, `Year`) %>% 
+                       mutate(TSS_Exceeded = ifelse(Mean_TSS > 30, Mean_TSS, NA))
+  
+### count how many months exceed TSS water quality standard for WT3 ###
+  WT3_TSS_Exceeded_count_month  <- Monthly_TSS_WT3 %>% 
+                                  group_by(Site) %>%
+                                  summarize(count_exceed_TSS = sum(!is.na(TSS_Exceeded)),
+                                  Count_all_TSS = sum(!is.na(Mean_TSS)))
+  
+### count how many years exceed TSS water quality standard for WT3 ###
+  WT3_TSS_Exceeded_count_year  <- Yearly_TSS_WT3 %>% 
+                                  group_by(Site) %>%
+                                  summarize(count_exceed_TSS = sum(!is.na(TSS_Exceeded)),
+                                  Count_all_TSS = sum(!is.na(Mean_TSS)))
+  
+#WT5
+  TSS_WT5_month     <- SWAMP_data %>% 
+                       filter(Site %in% c("WT5")) %>% 
+                       filter(Year %in% c(2008:2020)) %>% 
+                       select(`Site`, `Month`, `Year`, `TSS (mg/L)`) %>% 
+                       na.omit()
+  Monthly_TSS_WT5   <- TSS_WT5_month %>% 
+                       group_by(`Site`, `Year`, `Month`) %>% 
+                       summarise(Mean_TSS = mean(`TSS (mg/L)`)) %>% 
+                       group_by(`Site`, `Year`, `Month`) %>% 
+                       mutate(TSS_Exceeded = ifelse(Mean_TSS > 30, Mean_TSS, NA))
+  TSS_WT5_year      <- SWAMP_data %>% 
+                       filter(Site %in% c("WT5")) %>% 
+                       filter(Year %in% c(2008:2020)) %>% 
+                       select(`Site`, `Year`, `TSS (mg/L)`) %>% 
+                       na.omit()
+  Yearly_TSS_WT5    <- TSS_WT5_year %>% 
+                       group_by(`Site`, `Year`) %>% 
+                       summarise(Mean_TSS = mean(`TSS (mg/L)`)) %>% 
+                       group_by(`Site`, `Year`) %>% 
+                       mutate(TSS_Exceeded = ifelse(Mean_TSS > 30, Mean_TSS, NA))
+
+  ### count how many months exceed TSS water quality standard for WT5 ###
+  WT5_TSS_Exceeded_count_month <- Monthly_TSS_WT5 %>% 
+                                  group_by(Site) %>%
+                                  summarize(count_exceed_TSS = sum(!is.na(TSS_Exceeded)),
+                                  Count_all_TSS = sum(!is.na(Mean_TSS)))
+  
+  ### count how many years exceed TSS water quality standard for WT5 ###
+  WT5_TSS_Exceeded_count_year  <- Yearly_TSS_WT5 %>% 
+                                  group_by(Site) %>%
+                                  summarize(count_exceed_TSS = sum(!is.na(TSS_Exceeded)),
+                                  Count_all_TSS = sum(!is.na(Mean_TSS)))
+```
+
+TSS Summary
+```{r}
+### WT3 ###
+WT3_TSS_Exceeded_count_month
+
+WT3_TSS_Exceeded_count_year
+
+WT3_TSS_monthly_exceed <- Monthly_TSS_WT3 %>% 
+                          select(`Month`, `Year`, `TSS_Exceeded`) %>% 
+                          na.omit()
+
+WT3_TSS_yearly_exceed  <- Yearly_TSS_WT3 %>% 
+                          select(`Year`, `TSS_Exceeded`) %>% 
+                          na.omit()
+
+
+### WT5 ###
+WT5_TSS_Exceeded_count_month
+
+WT5_TSS_Exceeded_count_year
+
+WT5_TSS_monthly_exceed <- Monthly_TSS_WT5 %>% 
+                          select(`Month`, `Year`, `TSS_Exceeded`) %>% 
+                          na.omit()
+
+WT5_TSS_yearly_exceed  <- Yearly_TSS_WT5 %>% 
+                          select(`Year`, `TSS_Exceeded`) %>% 
+                          na.omit()
+```
+
 
 
 
