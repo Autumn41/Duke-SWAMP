@@ -22,6 +22,17 @@ YSI                  <- read_excel(here("Data/YSI.xlsx"))
 FecalColiform        <- read_excel(here("Data/FecalColiform.xlsx"))
 ```
 
+Fix Date Function
+```{r}
+#Fix days that will not be read as date
+fix_day <- Vectorize(
+            function(day) {
+              if (day %in% 1:9) 
+              return(paste0("0", day))
+              return(day) })
+
+```
+
 Water Quality Variable Function
 ```{r}
 #Time Inputs:
@@ -535,7 +546,7 @@ if (WQ == "TSS") {
 ```
 
 
-Generature Time Series Function
+Generate Time Series Function
 ```{r}
 TimeSeries <- function(df, output, seasonal) {
 if (seasonal == "yes") {

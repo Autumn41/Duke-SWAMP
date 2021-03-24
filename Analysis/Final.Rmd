@@ -5,7 +5,6 @@ date: "3/23/2021"
 output: pdf_document
 ---
 
-
 ## Functions used located in `Functions` rmd file ##
 
 Background Information:
@@ -51,13 +50,12 @@ Site Details:
 
 ###                   ###
 
-
 Packages Needed
 ```{r}
 if(!require(pacman))install.packages("pacman")
 
 pacman::p_load(ggpubr, ggplot2, readxl, tidyverse, dplyr, lubridate, here, pkgcond, naniar, arsenal, gam,
-               trend, zoo, Kendall)
+               trend, zoo, Kendall, ggforce, plotly)
 ```
 
 Upload Data
@@ -80,34 +78,473 @@ SWAMP_data$`Temp C`<- as.numeric(SWAMP_data$`Temp C`)
 ```
 
 Question 1: How does SWAMP water quality compare to water quality standards?
+
+Daily, Yearly, Monthly means of WT3
 ```{r}
+WT3_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("WT3")) %>% 
+             filter(Year %in% c(2008:2020))
+#dates
+DWT3_TN_day     <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "day") %>% 
+                   Exceedence(., WQ = "TN" , time = "day", type = "dates")
+DWT3_TN_month   <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TN" , time = "month", type = "dates")
+DWT3_TN_year    <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TN" , time = "year", type = "dates")
+DWT3_NH_day     <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "day")%>% 
+                   Exceedence(., WQ = "NH" , time = "day", type = "dates")
+DWT3_NH_month   <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "NH" , time = "month", type = "dates")
+DWT3_NH_year    <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "NH" , time = "year", type = "dates")
+DWT3_NOX_day    <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "day")%>% 
+                   Exceedence(., WQ = "NOX" , time = "day", type = "dates")
+DWT3_NOX_month  <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "month")%>% 
+                   Exceedence(., WQ = "NOX" , time = "month", type = "dates")
+DWT3_NOX_year   <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "year")%>% 
+                   Exceedence(., WQ = "NOX" , time = "year", type = "dates")
+DWT3_TP_day     <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "day")%>% 
+                   Exceedence(., WQ = "TP" , time = "day", type = "dates")
+DWT3_TP_month   <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "month")%>% 
+                   Exceedence(., WQ = "TP" , time = "month", type = "dates")
+DWT3_TP_year    <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "year")%>% 
+                   Exceedence(., WQ = "TP" , time = "year", type = "dates")
+DWT3_FC_day     <- WQV_time(WT3_SWAMP, WQV = "FC", time = "day")%>% 
+                   Exceedence(., WQ = "FC" , time = "day", type = "dates")
+DWT3_FC_month   <- WQV_time(WT3_SWAMP, WQV = "FC", time = "month")%>% 
+                   Exceedence(., WQ = "FC" , time = "month", type = "dates")
+DWT3_FC_year    <- WQV_time(WT3_SWAMP, WQV = "FC", time = "year")%>% 
+                   Exceedence(., WQ = "FC" , time = "year", type = "dates")
+DWT3_Temp_day   <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "day")%>% 
+                   Exceedence(., WQ = "Temp" , time = "day", type = "dates")
+DWT3_Temp_month <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "month")%>% 
+                   Exceedence(., WQ = "Temp" , time = "month", type = "dates")
+DWT3_Temp_year  <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "year")%>% 
+                   Exceedence(., WQ = "Temp" , time = "year", type = "dates")
+DWT3_pH_day     <- WQV_time(WT3_SWAMP, WQV = "pH", time = "day")%>% 
+                   Exceedence(., WQ = "pH" , time = "day", type = "dates")
+DWT3_pH_month   <- WQV_time(WT3_SWAMP, WQV = "pH", time = "month")%>% 
+                   Exceedence(., WQ = "pH" , time = "month", type = "dates")
+DWT3_pH_year    <- WQV_time(WT3_SWAMP, WQV = "pH", time = "year")%>% 
+                   Exceedence(., WQ = "pH" , time = "year", type = "dates")
+DWT3_TSS_month  <- WQV_time(WT3_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TSS" , time = "month", type = "dates")
+DWT3_TSS_year   <- WQV_time(WT3_SWAMP, WQV = "TSS (mg/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TSS" , time = "year", type = "dates")
 
+#counts
+CWT3_TN_day     <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "day") %>% 
+                   Exceedence(., WQ = "TN" , time = "day", type = "counts")
+CWT3_TN_month   <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TN" , time = "month", type = "counts")
+CWT3_TN_year    <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TN" , time = "year", type = "counts")
+CWT3_NH_day     <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "day")%>% 
+                   Exceedence(., WQ = "NH" , time = "day", type = "counts")
+CWT3_NH_month   <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "NH" , time = "month", type = "counts")
+CWT3_NH_year    <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "NH" , time = "year", type = "counts")
+CWT3_NOX_day    <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "day")%>% 
+                   Exceedence(., WQ = "NOX" , time = "day", type = "counts")
+CWT3_NOX_month  <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "month")%>% 
+                   Exceedence(., WQ = "NOX" , time = "month", type = "counts")
+CWT3_NOX_year   <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "year")%>% 
+                   Exceedence(., WQ = "NOX" , time = "year", type = "counts")
+CWT3_TP_day     <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "day")%>% 
+                   Exceedence(., WQ = "TP" , time = "day", type = "counts")
+CWT3_TP_month   <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "month")%>% 
+                   Exceedence(., WQ = "TP" , time = "month", type = "counts")
+CWT3_TP_year    <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "year")%>% 
+                   Exceedence(., WQ = "TP" , time = "year", type = "counts")
+CWT3_FC_day     <- WQV_time(WT3_SWAMP, WQV = "FC", time = "day")%>% 
+                   Exceedence(., WQ = "FC" , time = "day", type = "counts")
+CWT3_FC_month   <- WQV_time(WT3_SWAMP, WQV = "FC", time = "month")%>% 
+                   Exceedence(., WQ = "FC" , time = "month", type = "counts")
+CWT3_FC_year    <- WQV_time(WT3_SWAMP, WQV = "FC", time = "year")%>% 
+                   Exceedence(., WQ = "FC" , time = "year", type = "counts")
+CWT3_Temp_day   <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "day")%>% 
+                   Exceedence(., WQ = "Temp" , time = "day", type = "counts")
+CWT3_Temp_month <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "month")%>% 
+                   Exceedence(., WQ = "Temp" , time = "month", type = "counts")
+CWT3_Temp_year  <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "year")%>% 
+                   Exceedence(., WQ = "Temp" , time = "year", type = "counts")
+CWT3_pH_day     <- WQV_time(WT3_SWAMP, WQV = "pH", time = "day")%>% 
+                   Exceedence(., WQ = "pH" , time = "day", type = "counts")
+CWT3_pH_month   <- WQV_time(WT3_SWAMP, WQV = "pH", time = "month")%>% 
+                   Exceedence(., WQ = "pH" , time = "month", type = "counts")
+CWT3_pH_year    <- WQV_time(WT3_SWAMP, WQV = "pH", time = "year")%>% 
+                   Exceedence(., WQ = "pH" , time = "year", type = "counts")
+CWT3_TSS_month  <- WQV_time(WT3_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TSS" , time = "month", type = "counts")
+CWT3_TSS_year   <- WQV_time(WT3_SWAMP, WQV = "TSS (mg/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TSS" , time = "year", type = "counts")
+```
 
+Daily, Yearly, Monthly means of WT5
+```{r}
+WT5_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("WT5")) %>% 
+             filter(Year %in% c(2008:2020))
 
+#dates
+DWT5_TN_day     <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "day") %>% 
+                   Exceedence(., WQ = "TN" , time = "day", type = "dates")
+DWT5_TN_month   <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TN" , time = "month", type = "dates")
+DWT5_TN_year    <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TN" , time = "year", type = "dates")
+DWT5_NH_day     <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "day")%>% 
+                   Exceedence(., WQ = "NH" , time = "day", type = "dates")
+DWT5_NH_month   <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "NH" , time = "month", type = "dates")
+DWT5_NH_year    <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "NH" , time = "year", type = "dates")
+DWT5_NOX_day    <- WQV_time(WT5_SWAMP, WQV = "NOX", time = "day")%>% 
+                   Exceedence(., WQ = "NOX" , time = "day", type = "dates")
+DWT5_NOX_month  <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "month")%>% 
+                   Exceedence(., WQ = "NOX" , time = "month", type = "dates")
+DWT5_NOX_year   <- WQV_time(WT5_SWAMP, WQV = "NOX", time = "year")%>% 
+                   Exceedence(., WQ = "NOX" , time = "year", type = "dates")
+DWT5_TP_day     <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "day")%>% 
+                   Exceedence(., WQ = "TP" , time = "day", type = "dates")
+DWT5_TP_month   <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "month")%>% 
+                   Exceedence(., WQ = "TP" , time = "month", type = "dates")
+DWT5_TP_year    <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "year")%>% 
+                   Exceedence(., WQ = "TP" , time = "year", type = "dates")
+DWT5_FC_day     <- WQV_time(WT5_SWAMP, WQV = "FC", time = "day")%>% 
+                   Exceedence(., WQ = "FC" , time = "day", type = "dates")
+DWT5_FC_month   <- WQV_time(WT5_SWAMP, WQV = "FC", time = "month")%>% 
+                   Exceedence(., WQ = "FC" , time = "month", type = "dates")
+DWT5_FC_year    <- WQV_time(WT5_SWAMP, WQV = "FC", time = "year")%>% 
+                   Exceedence(., WQ = "FC" , time = "year", type = "dates")
+DWT5_Temp_day   <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "day")%>% 
+                   Exceedence(., WQ = "Temp" , time = "day", type = "dates")
+DWT5_Temp_month <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "month")%>% 
+                   Exceedence(., WQ = "Temp" , time = "month", type = "dates")
+DWT5_Temp_year  <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "year")%>% 
+                   Exceedence(., WQ = "Temp" , time = "year", type = "dates")
+DWT5_pH_day     <- WQV_time(WT5_SWAMP, WQV = "pH", time = "day")%>% 
+                   Exceedence(., WQ = "pH" , time = "day", type = "dates")
+DWT5_pH_month   <- WQV_time(WT5_SWAMP, WQV = "pH", time = "month")%>% 
+                   Exceedence(., WQ = "pH" , time = "month", type = "dates")
+DWT5_pH_year    <- WQV_time(WT5_SWAMP, WQV = "pH", time = "year")%>% 
+                   Exceedence(., WQ = "pH" , time = "year", type = "dates")
+DWT5_TSS_month  <- WQV_time(WT5_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TSS" , time = "month", type = "dates")
+DWT5_TSS_year   <- WQV_time(WT5_SWAMP, WQV = "TSS (mg/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TSS" , time = "year", type = "dates")
+
+#counts
+CWT5_TN_day     <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "day") %>% 
+                   Exceedence(., WQ = "TN" , time = "day", type = "counts")
+CWT5_TN_month   <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TN" , time = "month", type = "counts")
+CWT5_TN_year    <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TN" , time = "year", type = "counts")
+CWT5_NH_day     <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "day")%>% 
+                   Exceedence(., WQ = "NH" , time = "day", type = "counts")
+CWT5_NH_month   <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
+                   Exceedence(., WQ = "NH" , time = "month", type = "counts")
+CWT5_NH_year    <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "year")%>% 
+                   Exceedence(., WQ = "NH" , time = "year", type = "counts")
+CWT5_NOX_day    <- WQV_time(WT5_SWAMP, WQV = "NOX", time = "day")%>% 
+                   Exceedence(., WQ = "NOX" , time = "day", type = "counts")
+CWT5_NOX_month  <- WQV_time(WT5_SWAMP, WQV = "NOX", time = "month")%>% 
+                   Exceedence(., WQ = "NOX" , time = "month", type = "counts")
+CWT5_NOX_year   <- WQV_time(WT5_SWAMP, WQV = "NOX", time = "year")%>% 
+                   Exceedence(., WQ = "NOX" , time = "year", type = "counts")
+CWT5_TP_day     <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "day")%>% 
+                   Exceedence(., WQ = "TP" , time = "day", type = "counts")
+CWT5_TP_month   <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "month")%>% 
+                   Exceedence(., WQ = "TP" , time = "month", type = "counts")
+CWT5_TP_year    <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "year")%>% 
+                   Exceedence(., WQ = "TP" , time = "year", type = "counts")
+CWT5_FC_day     <- WQV_time(WT5_SWAMP, WQV = "FC", time = "day")%>% 
+                   Exceedence(., WQ = "FC" , time = "day", type = "counts")
+CWT5_FC_month   <- WQV_time(WT5_SWAMP, WQV = "FC", time = "month")%>% 
+                   Exceedence(., WQ = "FC" , time = "month", type = "counts")
+CWT5_FC_year    <- WQV_time(WT5_SWAMP, WQV = "FC", time = "year")%>% 
+                   Exceedence(., WQ = "FC" , time = "year", type = "counts")
+CWT5_Temp_day   <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "day")%>% 
+                   Exceedence(., WQ = "Temp" , time = "day", type = "counts")
+CWT5_Temp_month <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "month")%>% 
+                   Exceedence(., WQ = "Temp" , time = "month", type = "counts")
+CWT5_Temp_year  <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "year")%>% 
+                   Exceedence(., WQ = "Temp" , time = "year", type = "counts")
+CWT5_pH_day     <- WQV_time(WT5_SWAMP, WQV = "pH", time = "day")%>% 
+                   Exceedence(., WQ = "pH" , time = "day", type = "counts")
+CWT5_pH_month   <- WQV_time(WT5_SWAMP, WQV = "pH", time = "month")%>% 
+                   Exceedence(., WQ = "pH" , time = "month", type = "counts")
+CWT5_pH_year    <- WQV_time(WT5_SWAMP, WQV = "pH", time = "year")%>% 
+                   Exceedence(., WQ = "pH" , time = "year", type = "counts")
+CWT5_TSS_month  <- WQV_time(WT5_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
+                   Exceedence(., WQ = "TSS" , time = "month", type = "counts")
+CWT5_TSS_year   <- WQV_time(WT5_SWAMP, WQV = "TSS (mg/L)", time = "year")%>% 
+                   Exceedence(., WQ = "TSS" , time = "year", type = "counts")
+```
+
+Graphs
+WT3
+```{r}
+#Intercepts
+TN_intercept <- log(800)
+NH_intercept <- log(20)
+TP_intercept <- log(30)
+TSS_intercept <- log(30)
+
+#Clean up data for graphs
+DWT3_TN_month  <- DWT3_TN_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, TN_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(TN_Exceeded))
+DWT3_NH_month  <- DWT3_NH_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, NH_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(NH_Exceeded))
+DWT3_TP_month  <- DWT3_TP_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, TP_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(TP_Exceeded))
+DWT3_TSS_month <- DWT3_TSS_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, TSS_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(TSS_Exceeded))
+
+#Graph 1. Monthly average of Outflow Site 1 for ammonium. 
+Graph1 <- ggplot() +
+          geom_point(data = DWT3_NH_month, aes(y = Log, x = Date, colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=NH_intercept) +
+          geom_link(aes(x=DWT3_NH_month$Date, y=DWT3_NH_month$Log, 
+                        xend = DWT3_NH_month$Date, yend = NH_intercept, 
+                        colour = DWT3_NH_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red",
+                                labels=c("Low","High"), breaks=c(3.16,6)) +
+          xlab("Year") +
+          ylab("Log of Mean Ammonium (ug/L)") +
+          ggtitle("Monthly Mean Ammonium for SWAMP Outflow Site 1" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph1, tooltip = c("Date", "Log", "Monthly.Mean"))
+
+#Graph 2. Monthly average of Outflow Site 1 for total phosphorus. 
+Graph2 <- ggplot() +
+          geom_point(data = DWT3_TP_month, aes(y = Log, x = Date, colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=TP_intercept) +
+          geom_link(aes(x=DWT3_TP_month$Date, y=DWT3_TP_month$Log, 
+                        xend = DWT3_TP_month$Date, yend = TP_intercept, 
+                        colour = DWT3_TP_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red",
+                                labels=c("Low","High"), breaks=c(3.5,5)) +
+          xlab("Year") +
+          ylab("Log of Total Phosphorus (ug/L)") +
+          ggtitle("Monthly Mean Total Phosphorus for SWAMP Outflow Site 1" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph2, tooltip = c("Date", "Log", "Monthly.Mean"))
+
+#Graph 3. Monthly average of Outflow Site 1 for total nitrogen. 
+Graph3 <- ggplot() +
+          geom_point(data = DWT3_TN_month, aes(y = Log, x = Date, 
+                                               colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=TN_intercept) +
+          geom_link(aes(x=DWT3_TN_month$Date, y=DWT3_TN_month$Log, 
+                        xend = DWT3_TN_month$Date, yend = TN_intercept, 
+                        colour = DWT3_TN_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red", 
+                                labels=c("Low","High"), breaks=c(6.75,7.75)) +
+          xlab("Year") +
+          ylab("Log of Mean Total Nitrogen (ug/L)") +
+          ggtitle("Monthly Mean Total Nitrogen for SWAMP Outflow Site 1" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph3, tooltip = c("Date", "Log", "Monthly.Mean"))
+
+#Graph 4. Monthly average of Outflow Site 1 for total suspended solids 
+Graph4 <- ggplot() +
+          geom_point(data = DWT3_TSS_month, aes(y = Log, x = Date, 
+                                               colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=TSS_intercept) +
+          geom_link(aes(x=DWT3_TSS_month$Date, y=DWT3_TSS_month$Log, 
+                        xend = DWT3_TSS_month$Date, yend = TSS_intercept, 
+                        colour = DWT3_TSS_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red", 
+                                labels=c("Low","High"), breaks=c(3.5,5.5)) +
+          xlab("Year") +
+          ylab("Log of Mean Total Suspended Solids (mg/L)") +
+          ggtitle("Monthly Mean Total Suspended Solids for SWAMP Outflow Site 1" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph4, tooltip = c("Date", "Log", "Monthly.Mean"))
 
 ```
 
-Question 2: How effective is SWAMP in water quality treatment?
+WT5
 ```{r}
-#Model 1 - Compare WT1 to WT3
-Model1_TN <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model1_NH <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model1_NOX <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model1_TP <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model1_FC <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model1_Temp <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model1_pH <- gam(data= , formula = (( ) ~ s(Date) + `Site`), family = gaussian)
-Model1_TSS <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+#Clean up data for graphs
+DWT5_TN_month  <- DWT5_TN_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, TN_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(TN_Exceeded))
+DWT5_NH_month  <- DWT5_NH_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, NH_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(NH_Exceeded))
+DWT5_TP_month  <- DWT5_TP_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, TP_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(TP_Exceeded))
+DWT5_TSS_month <- DWT5_TSS_month %>% 
+                  mutate(Day = 1) %>% 
+                  mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
+                  select(Monthly.Mean, TSS_Exceeded, Date) %>% 
+                  mutate(Log = log(Monthly.Mean),
+                         Log_Ex = log(TSS_Exceeded))
 
-#Model 2 - Compare WT1 to WT5
-Model2_TN <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model2_NH <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model2_NOX <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model2_TP <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model2_FC <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model2_Temp <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
-Model2_pH <- gam(data= , formula = (( ) ~ s(Date) + `Site`), family = gaussian)
-Model2_TSS <- gam(data= , formula = (log( ) ~ s(Date) + `Site`), family = gaussian)
+#Graph 5. Monthly average of Outflow Site 2 for ammonium.
+Graph5 <- ggplot() +
+          geom_point(data = DWT5_NH_month, aes(y = Log, x = Date, colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=NH_intercept) +
+          geom_link(aes(x=DWT5_NH_month$Date, y=DWT5_NH_month$Log, 
+                        xend = DWT5_NH_month$Date, yend = NH_intercept, 
+                        colour = DWT5_NH_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red",
+                                labels=c("Low","High"), breaks=c(4,6)) +
+          xlab("Year") +
+          ylab("Log of Mean Ammonium (ug/L)") +
+          ggtitle("Monthly Mean Ammonium for SWAMP Outflow Site 2" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph5, tooltip = c("Date", "Log", "Monthly.Mean"))
+
+#Graph 6. Monthly average of Outflow Site 2 for total phosphorus.
+Graph6 <- ggplot() +
+          geom_point(data = DWT5_TP_month, aes(y = Log, x = Date, colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=TP_intercept) +
+          geom_link(aes(x=DWT5_TP_month$Date, y=DWT5_TP_month$Log, 
+                        xend = DWT5_TP_month$Date, yend = TP_intercept, 
+                        colour = DWT5_TP_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red",
+                                labels=c("Low","High"), breaks=c(4,6)) +
+          xlab("Year") +
+          ylab("Log of Total Phosphorus (ug/L)") +
+          ggtitle("Monthly Mean Total Phosphorus for SWAMP Outflow Site 2" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph6, tooltip = c("Date", "Log", "Monthly.Mean"))
+
+#Graph 7. Monthly average of Outflow Site 2 for total nitrogen.
+Graph7 <- ggplot() +
+          geom_point(data = DWT5_TN_month, aes(y = Log, x = Date, 
+                                               colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=TN_intercept) +
+          geom_link(aes(x=DWT5_TN_month$Date, y=DWT5_TN_month$Log, 
+                        xend = DWT5_TN_month$Date, yend = TN_intercept, 
+                        colour = DWT5_TN_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red", 
+                                labels=c("Low","High"), breaks=c(7,8)) +
+          xlab("Year") +
+          ylab("Log of Mean Total Nitrogen (ug/L)") +
+          ggtitle("Monthly Mean Total Nitrogen for SWAMP Outflow Site 2" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph7, tooltip = c("Date", "Log", "Monthly.Mean"))
+
+#Graph 8. Monthly average of Outflow Site 2 for total suspended solids.
+Graph8 <- ggplot() +
+          geom_point(data = DWT5_TSS_month, aes(y = Log, x = Date, 
+                                               colour = Log_Ex, size = Monthly.Mean)) +
+          scale_size(range= c(0)) +
+          geom_hline(yintercept=TSS_intercept) +
+          geom_link(aes(x=DWT5_TSS_month$Date, y=DWT5_TSS_month$Log, 
+                        xend = DWT5_TSS_month$Date, yend = TSS_intercept, 
+                        colour = DWT5_TSS_month$Log_Ex)) +
+          scale_colour_gradient(name = "Exceeded Water Quality Standard", 
+                                low = "red4", high = "red", 
+                                labels=c("Low","High"), breaks=c(3.5,5.5)) +
+          xlab("Year") +
+          ylab("Log of Mean Total Suspended Solids (mg/L)") +
+          ggtitle("Monthly Mean Total Suspended Solids for SWAMP Outflow Site 2" ) + 
+          scale_x_date(date_labels = "%Y", breaks = "year")
+ggplotly(Graph8, tooltip = c("Date", "Log", "Monthly.Mean"))
+```
+
+Question 2: How effective is SWAMP in water quality treatment?
+
+Compare WT1 to WT3
+```{r}
+#select data for WT1 and WT3 for 2008 - 2020
+WT1_WT3_SWAMP <- SWAMP_data %>% 
+                 filter(Site %in% c("WT1", "WT3")) %>% 
+                 filter(Year %in% c(2008:2020))
+
+TN_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "Total N (ug/L)", time = "")
+NH_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "")
+NOX_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "NOX", time = "")
+TP_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "UTP", time = "")
+FC_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "FC", time = "")
+Temp_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "Temp C", time = "")
+pH_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "pH", time = "")
+TSS_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "TSS (mg/L)", time = "")
+
+#Model 1 
+Model1_TN <- gam(data= TN_model1, formula = (log(`Total N (ug/L)` ) ~ s(Date) + `Site`), family = gaussian)
+Model1_NH <- gam(data= NH_model1, formula = (log(`NH4-N (ug/L)`) ~ s(Date) + `Site`), family = gaussian)
+Model1_NOX <- gam(data= NOX_model1, formula = (log(`NOX`) ~ s(Date) + `Site`), family = gaussian)
+Model1_TP <- gam(data= TP_model1, formula = (log(`UTP`) ~ s(Date) + `Site`), family = gaussian)
+Model1_FC <- gam(data= FC_model1, formula = (log(`FC`) ~ s(Date) + `Site`), family = gaussian)
+Model1_Temp <- gam(data= Temp_model1, formula = (log(`Temp C`) ~ s(Date) + `Site`), family = gaussian)
+Model1_pH <- gam(data= pH_model1, formula = ((`pH`) ~ s(Date) + `Site`), family = gaussian)
+Model1_TSS <- gam(data= TSS_model1, formula = (log(`TSS (mg/L)`) ~ s(Date) + `Site`), family = gaussian)
+
+```
+
+Compare WT1 to WT5
+```{r}
+#select data for WT1 and WT5 for 2008 - 2020
+WT1_WT5_SWAMP <- SWAMP_data %>% 
+                 filter(Site %in% c("WT1", "WT5")) %>% 
+                 filter(Year %in% c(2008:2020))
+
+TN_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "Total N (ug/L)", time = "")
+NH_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "")
+NOX_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "NOX", time = "")
+TP_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "UTP", time = "")
+FC_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "FC", time = "")
+Temp_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "Temp C", time = "")
+pH_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "pH", time = "")
+TSS_model2 <- WQV_time(WT1_WT5_SWAMP, WQV = "TSS (mg/L)", time = "")
+
+#Model 2 
+Model2_TN <- gam(data= TN_model2, formula = (log(`Total N (ug/L)` ) ~ s(Date) + `Site`), family = gaussian)
+Model2_NH <- gam(data= NH_model2, formula = (log(`NH4-N (ug/L)`) ~ s(Date) + `Site`), family = gaussian)
+Model2_NOX <- gam(data= NOX_model2, formula = (log(`NOX`) ~ s(Date) + `Site`), family = gaussian)
+Model2_TP <- gam(data= TP_model2, formula = (log(`UTP`) ~ s(Date) + `Site`), family = gaussian)
+Model2_FC <- gam(data= FC_model2, formula = (log(`FC`) ~ s(Date) + `Site`), family = gaussian)
+Model2_Temp <- gam(data= Temp_model2, formula = (log(`Temp C`) ~ s(Date) + `Site`), family = gaussian)
+Model2_pH <- gam(data= pH_model2, formula = ((`pH`) ~ s(Date) + `Site`), family = gaussian)
+Model2_TSS <- gam(data= TSS_model2, formula = (log(`TSS (mg/L)`) ~ s(Date) + `Site`), family = gaussian)
 ```
 
 Question 3: What are the seasonal trends of SWAMP?
@@ -118,7 +555,6 @@ WT1
 WT1_SWAMP <- SWAMP_data %>% 
              filter(Site %in% c("WT1")) %>% 
              filter(Year %in% c(2008:2020))
-
 
 clean_WT1_TN <- WT1_SWAMP %>% 
              WQV_time(., WQV = "Total N (ug/L)", time = "month") %>% 
@@ -189,11 +625,6 @@ TimeSeries(clean_WT1_NH, output = "summary", seasonal = "no")
 WT3
 ```{r}
 #Clean data for Time Series
-WT3_SWAMP <- SWAMP_data %>% 
-             filter(Site %in% c("WT3")) %>% 
-             filter(Year %in% c(2008:2020))
-
-
 clean_WT3_TN <- WT3_SWAMP %>% 
              WQV_time(., WQV = "Total N (ug/L)", time = "month") %>% 
              Fix_Missing_Data(., time = "month")
@@ -263,11 +694,6 @@ TimeSeries(clean_WT3_NH, output = "summary", seasonal = "no")
 WT5
 ```{r}
 #Clean data for Time Series
-WT5_SWAMP <- SWAMP_data %>% 
-             filter(Site %in% c("WT5")) %>% 
-             filter(Year %in% c(2008:2020))
-
-
 clean_WT5_TN <- WT5_SWAMP %>% 
              WQV_time(., WQV = "Total N (ug/L)", time = "month") %>% 
              Fix_Missing_Data(., time = "month")
@@ -332,14 +758,5 @@ TimeSeries(clean_WT5_FC, output = "summary", seasonal = "no")
 TimeSeries(clean_WT5_TSS, output = "summary", seasonal = "no")
 TimeSeries(clean_WT5_pH, output = "summary", seasonal = "no")
 TimeSeries(clean_WT5_NH, output = "summary", seasonal = "no")
-```
-
-Time Series Analysis - Comparisons
-```{r}
-#compare WT1 to WT5
-
-
-#compare WT1 to WT3
-
 ```
 
