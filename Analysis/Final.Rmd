@@ -520,6 +520,28 @@ Model1_TSS <- gam(data= TSS_model1, formula = (log(`TSS (mg/L)`) ~ s(Date) + `Si
 
 ```
 
+```{r}
+# e.g. df = TN_model1
+averageValue <- function(df) {
+  days = seq(min(df$Date), max(df$Date), "days")
+
+  data = left_join(data.frame(Date = days), df, by="Date")
+  Model1_TN <- lm(data = data, formula = (log(`Total N (ug/L)` ) ~ poly(Date, 10) + Site - 1))
+
+  #plot(data[data$Date %in% df$Date, "Date"], predict(Model1_TN))
+
+  coefs = coef(Model1_TN)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model1_TN)
+  CI = CI[11:nrow(CI), ]
+  
+  cbind(CI, estimate=coefs)
+}
+
+averageValue(TN_model1)
+```
+
+
 Compare WT1 to WT5
 ```{r}
 #select data for WT1 and WT5 for 2008 - 2020
