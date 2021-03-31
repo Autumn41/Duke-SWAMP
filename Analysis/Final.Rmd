@@ -506,7 +506,7 @@ TP_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "UTP", time = "")
 FC_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "FC", time = "")
 Temp_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "Temp C", time = "")
 pH_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "pH", time = "")
-TSS_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "TSS (mg/L)", time = "")
+TSS_model1 <- WQV_time(WT1_WT3_SWAMP, WQV = "TSS (mg/L)", time = "") 
 
 #Model 1 
 Model1_TN <- gam(data= TN_model1, formula = (log(`Total N (ug/L)` ) ~ s(Date) + `Site`), family = gaussian)
