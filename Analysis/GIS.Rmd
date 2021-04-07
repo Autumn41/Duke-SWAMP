@@ -50,6 +50,21 @@ longitude = x
   P3D
     x = -78.942556
     y = 35.991359
+  P51
+    x = -78.938669
+    y = 35.993430
+  P53
+    x = -78.938755
+    y = 35.938775
+  AN2
+    x = -78.941317
+    y = 35.986898
+  AN4
+    x = -78.943002
+    y = 35.987457 
+  AN5
+    x = -78.943044
+    y = 35.987463 
 
 ####                                    ####
 
@@ -62,37 +77,37 @@ WT1_SWAMP <- SWAMP_data %>%
              filter(Year %in% c(2008:2020))
 #GIS
 
-WT1_TN_GIS   <- WQV_time(WT1_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(TN = Clean.Monthly.Mean) 
+WT1_TN_GIS   <- WQV_time(df = WT1_SWAMP, WQV = "Total N (ug/L)", time = "all") %>% 
+                Add_all_dates( ) %>% 
+                rename(TN = WQV) 
 
-WT1_NH_GIS   <- WQV_time(WT1_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(NH = Clean.Monthly.Mean)
+WT1_NH_GIS   <- WQV_time(WT1_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(NH = WQV)
 
-WT1_NOX_GIS  <- WQV_time(WT1_SWAMP, WQV = "NOX", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(NOX = Clean.Monthly.Mean)
+WT1_NOX_GIS  <- WQV_time(WT1_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV)
 
-WT1_TP_GIS   <- WQV_time(WT1_SWAMP, WQV = "UTP", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(TP = Clean.Monthly.Mean)
+WT1_TP_GIS   <- WQV_time(WT1_SWAMP, WQV = "UTP", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(TP = WQV)
 
-WT1_FC_GIS   <- WQV_time(WT1_SWAMP, WQV = "FC", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(FC = Clean.Monthly.Mean) 
+WT1_FC_GIS   <- WQV_time(WT1_SWAMP, WQV = "FC", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(FC = WQV) 
 
-WT1_Temp_GIS <- WQV_time(WT1_SWAMP, WQV = "Temp C", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(Temp = Clean.Monthly.Mean) 
+WT1_Temp_GIS <- WQV_time(WT1_SWAMP, WQV = "Temp C", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
 
-WT1_pH_GIS   <- WQV_time(WT1_SWAMP, WQV = "pH", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(pH = Clean.Monthly.Mean) 
+WT1_pH_GIS   <- WQV_time(WT1_SWAMP, WQV = "pH", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
 
-WT1_TSS_GIS  <- WQV_time(WT1_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(TSS = Clean.Monthly.Mean) 
+WT1_TSS_GIS  <- WQV_time(WT1_SWAMP, WQV = "TSS (mg/L)", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
 
 WT1_most_gis <-   merge(WT1_TN_GIS, 
              merge(WT1_NH_GIS, 
@@ -112,6 +127,24 @@ WT1_pH_temp <- merge(WT1_Temp_GIS, WT1_pH_GIS,
                       Site = "WT1")
 
 WT1_GIS<- left_join(x = WT1_most_gis, y =WT1_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+WT1_most_sf <-   merge(WT1_TN_GIS, 
+                 merge(WT1_NH_GIS, 
+                 merge(WT1_NOX_GIS, 
+                 merge(WT1_TP_GIS, 
+                 merge(WT1_FC_GIS,
+                      WT1_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "WT1") %>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+WT1_pH_temp_sf <- merge(WT1_Temp_GIS, WT1_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "WT1")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+WT1_SF<- left_join(x = WT1_most_sf, y = WT1_pH_temp_sf, by = c("Date", "Site"))
+WT1_SF[, 3:10][WT1_SF[, 3:10] == 0] <- 0.000001
 ```
 
 
@@ -122,37 +155,37 @@ WT3_SWAMP <- SWAMP_data %>%
              filter(Year %in% c(2008:2020))
 #GIS
 
-WT3_TN_GIS   <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(TN = Clean.Monthly.Mean) 
+WT3_TN_GIS   <- WQV_time(WT3_SWAMP, WQV = "Total N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(TN = WQV) 
 
-WT3_NH_GIS   <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%
-                  rename(NH = Clean.Monthly.Mean) 
+WT3_NH_GIS   <- WQV_time(WT3_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NH = WQV) 
 
-WT3_NOX_GIS  <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(NOX = Clean.Monthly.Mean)
+WT3_NOX_GIS  <- WQV_time(WT3_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV)
 
-WT3_TP_GIS   <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(TP = Clean.Monthly.Mean)
+WT3_TP_GIS   <- WQV_time(WT3_SWAMP, WQV = "UTP", time = "all")%>% 
+                Add_all_dates( ) %>%   
+                  rename(TP = WQV)
 
-WT3_FC_GIS   <- WQV_time(WT3_SWAMP, WQV = "FC", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(FC = Clean.Monthly.Mean) 
+WT3_FC_GIS   <- WQV_time(WT3_SWAMP, WQV = "FC", time = "all")%>% 
+                Add_all_dates( ) %>%   
+                  rename(FC = WQV) 
 
-WT3_Temp_GIS <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(Temp = Clean.Monthly.Mean) 
+WT3_Temp_GIS <- WQV_time(WT3_SWAMP, WQV = "Temp C", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
 
-WT3_pH_GIS   <- WQV_time(WT3_SWAMP, WQV = "pH", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(pH = Clean.Monthly.Mean) 
+WT3_pH_GIS   <- WQV_time(WT3_SWAMP, WQV = "pH", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
 
-WT3_TSS_GIS  <- WQV_time(WT3_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(TSS = Clean.Monthly.Mean)
+WT3_TSS_GIS  <- WQV_time(WT3_SWAMP, WQV = "TSS (mg/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(TSS = WQV)
 
 WT3_most_gis <-   merge(WT3_TN_GIS, 
              merge(WT3_NH_GIS, 
@@ -172,6 +205,25 @@ WT3_pH_temp <- merge(WT3_Temp_GIS, WT3_pH_GIS,
                     Site = "WT3")
 
 WT3_GIS<- left_join(x = WT3_most_gis, y =WT3_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+WT3_most_sf <-   merge(WT3_TN_GIS, 
+                 merge(WT3_NH_GIS, 
+                 merge(WT3_NOX_GIS, 
+                 merge(WT3_TP_GIS, 
+                 merge(WT3_FC_GIS,
+                      WT3_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "WT3")%>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+WT3_pH_temp_sf <- merge(WT3_Temp_GIS, WT3_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "WT3")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+
+WT3_SF<- left_join(x = WT3_most_sf, y = WT3_pH_temp_sf, by = c("Date", "Site"))
+WT3_SF[, 3:10][WT3_SF[, 3:10] == 0] <- 0.000001
 ```
 
 WT4
@@ -181,37 +233,37 @@ WT4_SWAMP <- SWAMP_data %>%
              filter(Year %in% c(2008:2020))
 #GIS
 
-WT4_TN_GIS   <- WQV_time(WT4_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(TN = Clean.Monthly.Mean) 
+WT4_TN_GIS   <- WQV_time(WT4_SWAMP, WQV = "Total N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(TN = WQV) 
 
-WT4_NH_GIS   <- WQV_time(WT4_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(NH = Clean.Monthly.Mean) 
+WT4_NH_GIS   <- WQV_time(WT4_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NH = WQV) 
 
-WT4_NOX_GIS  <- WQV_time(WT4_SWAMP, WQV = "NOX", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(NOX = Clean.Monthly.Mean) 
+WT4_NOX_GIS  <- WQV_time(WT4_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV) 
 
-WT4_TP_GIS   <- WQV_time(WT4_SWAMP, WQV = "UTP", time = "month")%>%  
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(TP = Clean.Monthly.Mean)
+WT4_TP_GIS   <- WQV_time(WT4_SWAMP, WQV = "UTP", time = "all")%>%  
+                Add_all_dates( ) %>%   
+                  rename(TP = WQV)
 
-WT4_FC_GIS   <- WQV_time(WT4_SWAMP, WQV = "FC", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(FC = Clean.Monthly.Mean) 
+WT4_FC_GIS   <- WQV_time(WT4_SWAMP, WQV = "FC", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(FC = WQV) 
 
-WT4_Temp_GIS <- WQV_time(WT4_SWAMP, WQV = "Temp C", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(Temp = Clean.Monthly.Mean) 
+WT4_Temp_GIS <- WQV_time(WT4_SWAMP, WQV = "Temp C", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
 
-WT4_pH_GIS   <- WQV_time(WT4_SWAMP, WQV = "pH", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(pH = Clean.Monthly.Mean) 
+WT4_pH_GIS   <- WQV_time(WT4_SWAMP, WQV = "pH", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
 
-WT4_TSS_GIS  <- WQV_time(WT4_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(TSS = Clean.Monthly.Mean) 
+WT4_TSS_GIS  <- WQV_time(WT4_SWAMP, WQV = "TSS (mg/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
 
 WT4_most_gis <-   merge(WT4_TN_GIS, 
              merge(WT4_NH_GIS, 
@@ -231,6 +283,25 @@ WT4_pH_temp <- merge(WT4_Temp_GIS, WT4_pH_GIS,
                     Site = "WT4")
 
 WT4_GIS<- left_join(x = WT4_most_gis, y =WT4_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+WT4_most_sf <-   merge(WT4_TN_GIS, 
+             merge(WT4_NH_GIS, 
+             merge(WT4_NOX_GIS, 
+             merge(WT4_TP_GIS, 
+             merge(WT4_FC_GIS,
+                   WT4_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "WT4")%>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+WT4_pH_temp_sf <- merge(WT4_Temp_GIS, WT4_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "WT4")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+
+WT4_SF<- left_join(x = WT4_most_sf, y = WT4_pH_temp_sf, by = c("Date", "Site"))
+WT4_SF[, 3:10][WT4_SF[, 3:10] == 0] <- 0.000001
 ```
 
 WT5
@@ -240,38 +311,37 @@ WT5_SWAMP <- SWAMP_data %>%
              filter(Year %in% c(2008:2020))
 #GIS
 
-WT5_TN_GIS   <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(TN = Clean.Monthly.Mean) 
+WT5_TN_GIS   <- WQV_time(WT5_SWAMP, WQV = "Total N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(TN = WQV) 
 
-WT5_NH_GIS   <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(NH = Clean.Monthly.Mean) 
+WT5_NH_GIS   <- WQV_time(WT5_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(NH = WQV) 
 
-WT5_NOX_GIS  <- WQV_time(WT5_SWAMP, WQV = "NOX", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(NOX = Clean.Monthly.Mean) 
+WT5_NOX_GIS  <- WQV_time(WT5_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(NOX = WQV) 
 
-WT5_TP_GIS   <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(TP = Clean.Monthly.Mean) 
+WT5_TP_GIS   <- WQV_time(WT5_SWAMP, WQV = "UTP", time = "all")%>% 
+                Add_all_dates( ) %>%   
+                  rename(TP = WQV) 
 
-WT5_FC_GIS   <- WQV_time(WT5_SWAMP, WQV = "FC", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(FC = Clean.Monthly.Mean)
+WT5_FC_GIS   <- WQV_time(WT5_SWAMP, WQV = "FC", time = "all")%>% 
+                Add_all_dates( ) %>%   
+                  rename(FC = WQV)
 
-WT5_Temp_GIS <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(Temp = Clean.Monthly.Mean) %>% 
-                  mutate(Site = "WT5")
+WT5_Temp_GIS <- WQV_time(WT5_SWAMP, WQV = "Temp C", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(Temp = WQV) 
 
-WT5_pH_GIS   <- WQV_time(WT5_SWAMP, WQV = "pH", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(pH = Clean.Monthly.Mean) 
+WT5_pH_GIS   <- WQV_time(WT5_SWAMP, WQV = "pH", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(pH = WQV) 
 
-WT5_TSS_GIS  <- WQV_time(WT5_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(TSS = Clean.Monthly.Mean) 
+WT5_TSS_GIS  <- WQV_time(WT5_SWAMP, WQV = "TSS (mg/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
 
 WT5_most_gis <-   merge(WT5_TN_GIS, 
              merge(WT5_NH_GIS, 
@@ -291,6 +361,25 @@ WT5_pH_temp <- merge(WT5_Temp_GIS, WT5_pH_GIS,
                     Site = "WT5")
 
 WT5_GIS<- left_join(x = WT5_most_gis, y = WT5_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+WT5_most_sf <-   merge(WT5_TN_GIS, 
+             merge(WT5_NH_GIS, 
+             merge(WT5_NOX_GIS, 
+             merge(WT5_TP_GIS, 
+             merge(WT5_FC_GIS,
+                   WT5_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "WT5")%>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+WT5_pH_temp_sf <- merge(WT5_Temp_GIS, WT5_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "WT5")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+
+WT5_SF<- left_join(x = WT5_most_sf, y = WT5_pH_temp_sf, by = c("Date", "Site"))
+WT5_SF[, 3:10][WT5_SF[, 3:10] == 0] <- 0.000001
 ```
 
 P3D
@@ -300,38 +389,37 @@ P3D_SWAMP <- SWAMP_data %>%
              filter(Year %in% c(2008:2020))
 #GIS
 
-P3D_TN_GIS   <- WQV_time(P3D_SWAMP, WQV = "Total N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(TN = Clean.Monthly.Mean) 
+P3D_TN_GIS   <- WQV_time(P3D_SWAMP, WQV = "Total N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(TN = WQV) 
 
-P3D_NH_GIS   <- WQV_time(P3D_SWAMP, WQV = "NH4-N (ug/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(NH = Clean.Monthly.Mean) 
+P3D_NH_GIS   <- WQV_time(P3D_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                Add_all_dates( ) %>%  
+                  rename(NH = WQV) 
 
-P3D_NOX_GIS  <- WQV_time(P3D_SWAMP, WQV = "NOX", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(NOX = Clean.Monthly.Mean) 
+P3D_NOX_GIS  <- WQV_time(P3D_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV) 
 
-P3D_TP_GIS   <- WQV_time(P3D_SWAMP, WQV = "UTP", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(TP = Clean.Monthly.Mean) 
+P3D_TP_GIS   <- WQV_time(P3D_SWAMP, WQV = "UTP", time = "all")%>% 
+                Add_all_dates( ) %>%    
+                  rename(TP = WQV) 
 
-P3D_FC_GIS   <- WQV_time(P3D_SWAMP, WQV = "FC", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(FC = Clean.Monthly.Mean) 
+P3D_FC_GIS   <- WQV_time(P3D_SWAMP, WQV = "FC", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(FC = WQV) 
 
-P3D_Temp_GIS <- WQV_time(P3D_SWAMP, WQV = "Temp C", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%   
-                  rename(Temp = Clean.Monthly.Mean) 
+P3D_Temp_GIS <- WQV_time(P3D_SWAMP, WQV = "Temp C", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
 
-P3D_pH_GIS   <- WQV_time(P3D_SWAMP, WQV = "pH", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>%  
-                  rename(pH = Clean.Monthly.Mean) %>% 
-                  mutate(Site = "P3D")
+P3D_pH_GIS   <- WQV_time(P3D_SWAMP, WQV = "pH", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
 
-P3D_TSS_GIS  <- WQV_time(P3D_SWAMP, WQV = "TSS (mg/L)", time = "month")%>% 
-                  Fix_Missing_Data(., time = "month") %>% 
-                  rename(TSS = Clean.Monthly.Mean) 
+P3D_TSS_GIS  <- WQV_time(P3D_SWAMP, WQV = "TSS (mg/L)", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
 
 P3D_most_gis <-   merge(P3D_TN_GIS, 
              merge(P3D_NH_GIS, 
@@ -351,7 +439,410 @@ P3D_pH_temp <- merge(P3D_Temp_GIS, P3D_pH_GIS,
                     Site = "P3D")
 
 P3D_GIS<- left_join(x = P3D_most_gis, y = P3D_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+P3D_most_sf <-   merge(P3D_TN_GIS, 
+             merge(P3D_NH_GIS, 
+             merge(P3D_NOX_GIS, 
+             merge(P3D_TP_GIS, 
+             merge(P3D_FC_GIS,
+                   P3D_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "P3D")%>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+P3D_pH_temp_sf <- merge(P3D_Temp_GIS, P3D_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "P3D")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+
+P3D_SF<- left_join(x = P3D_most_sf, y = P3D_pH_temp_sf, by = c("Date", "Site"))
+P3D_SF[, 3:10][P3D_SF[, 3:10] == 0] <- 0.000001
 ```  
+P51
+```{r}
+P51_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("P51")) %>% 
+             filter(Year %in% c(2008:2020))
+#GIS
+
+P51_TN_GIS   <- WQV_time(df = P51_SWAMP, WQV = "Total N (ug/L)", time = "all") %>% 
+                Add_all_dates( ) %>% 
+                rename(TN = WQV) 
+
+P51_NH_GIS   <- WQV_time(P51_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(NH = WQV)
+
+P51_NOX_GIS  <- WQV_time(P51_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV)
+
+P51_TP_GIS   <- WQV_time(P51_SWAMP, WQV = "UTP", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(TP = WQV)
+
+P51_FC_GIS   <- WQV_time(P51_SWAMP, WQV = "FC", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(FC = WQV) 
+
+P51_Temp_GIS <- WQV_time(P51_SWAMP, WQV = "Temp C", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
+
+P51_pH_GIS   <- WQV_time(P51_SWAMP, WQV = "pH", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
+
+P51_TSS_GIS  <- WQV_time(P51_SWAMP, WQV = "TSS (mg/L)", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
+
+P51_most_gis <-   merge(P51_TN_GIS, 
+             merge(P51_NH_GIS, 
+             merge(P51_NOX_GIS, 
+             merge(P51_TP_GIS, 
+             merge(P51_FC_GIS, 
+                   P51_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(x = "-78.938669",
+                    y = "35.993430",
+                    Site = "P51")
+
+P51_pH_temp <- merge(P51_Temp_GIS, P51_pH_GIS, 
+               by = "Date") %>% 
+               mutate(x = "-78.938669",
+                      y = "35.993430",
+                      Site = "P51")
+
+P51_GIS<- left_join(x = P51_most_gis, y =P51_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+P51_most_sf <-   merge(P51_TN_GIS, 
+                 merge(P51_NH_GIS, 
+                 merge(P51_NOX_GIS, 
+                 merge(P51_TP_GIS, 
+                 merge(P51_FC_GIS,
+                      P51_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "P51") %>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+P51_pH_temp_sf <- merge(P51_Temp_GIS, P51_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "P51")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+P51_SF<- left_join(x = P51_most_sf, y = P51_pH_temp_sf, by = c("Date", "Site"))
+P51_SF[, 3:10][P51_SF[, 3:10] == 0] <- 0.000001
+```
+
+P53
+```{r}
+P53_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("P53")) %>% 
+             filter(Year %in% c(2008:2020))
+#GIS
+
+P53_TN_GIS   <- WQV_time(df = P53_SWAMP, WQV = "Total N (ug/L)", time = "all") %>% 
+                Add_all_dates( ) %>% 
+                rename(TN = WQV) 
+
+P53_NH_GIS   <- WQV_time(P53_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(NH = WQV)
+
+P53_NOX_GIS  <- WQV_time(P53_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV)
+
+P53_TP_GIS   <- WQV_time(P53_SWAMP, WQV = "UTP", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(TP = WQV)
+
+P53_FC_GIS   <- WQV_time(P53_SWAMP, WQV = "FC", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(FC = WQV) 
+
+P53_Temp_GIS <- WQV_time(P53_SWAMP, WQV = "Temp C", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
+
+P53_pH_GIS   <- WQV_time(P53_SWAMP, WQV = "pH", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
+
+P53_TSS_GIS  <- WQV_time(P53_SWAMP, WQV = "TSS (mg/L)", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
+
+P53_most_gis <-   merge(P53_TN_GIS, 
+             merge(P53_NH_GIS, 
+             merge(P53_NOX_GIS, 
+             merge(P53_TP_GIS, 
+             merge(P53_FC_GIS, 
+                   P53_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(x = "-78.938755",
+                    y = "35.938775",
+                    Site = "P53")
+
+P53_pH_temp <- merge(P53_Temp_GIS, P53_pH_GIS, 
+               by = "Date") %>% 
+               mutate(x = "-78.938755",
+                      y = "35.938775",
+                      Site = "P53")
+
+P53_GIS<- left_join(x = P53_most_gis, y =P53_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+P53_most_sf <-   merge(P53_TN_GIS, 
+                 merge(P53_NH_GIS, 
+                 merge(P53_NOX_GIS, 
+                 merge(P53_TP_GIS, 
+                 merge(P53_FC_GIS,
+                      P53_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "P53") %>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+P53_pH_temp_sf <- merge(P53_Temp_GIS, P53_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "P53")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+P53_SF<- left_join(x = P53_most_sf, y = P53_pH_temp_sf, by = c("Date", "Site"))
+P53_SF[, 3:10][P53_SF[, 3:10] == 0] <- 0.000001
+```
+
+AN2
+```{r}
+AN2_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("AN2")) %>% 
+             filter(Year %in% c(2008:2020))
+#GIS
+
+AN2_TN_GIS   <- WQV_time(df = AN2_SWAMP, WQV = "Total N (ug/L)", time = "all") %>% 
+                Add_all_dates( ) %>% 
+                rename(TN = WQV) 
+
+AN2_NH_GIS   <- WQV_time(AN2_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(NH = WQV)
+
+AN2_NOX_GIS  <- WQV_time(AN2_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV)
+
+AN2_TP_GIS   <- WQV_time(AN2_SWAMP, WQV = "UTP", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(TP = WQV)
+
+AN2_FC_GIS   <- WQV_time(AN2_SWAMP, WQV = "FC", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(FC = WQV) 
+
+AN2_Temp_GIS <- WQV_time(AN2_SWAMP, WQV = "Temp C", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
+
+AN2_pH_GIS   <- WQV_time(AN2_SWAMP, WQV = "pH", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
+
+AN2_TSS_GIS  <- WQV_time(AN2_SWAMP, WQV = "TSS (mg/L)", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
+
+AN2_most_gis <-   merge(AN2_TN_GIS, 
+             merge(AN2_NH_GIS, 
+             merge(AN2_NOX_GIS, 
+             merge(AN2_TP_GIS, 
+             merge(AN2_FC_GIS, 
+                   AN2_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(x = "-78.941317",
+                    y = "35.986898",
+                    Site = "AN2")
+
+AN2_pH_temp <- merge(AN2_Temp_GIS, AN2_pH_GIS, 
+               by = "Date") %>% 
+               mutate(x = "-78.941317",
+                      y = "35.986898",
+                      Site = "AN2")
+
+AN2_GIS<- left_join(x = AN2_most_gis, y =AN2_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+AN2_most_sf <-   merge(AN2_TN_GIS, 
+                 merge(AN2_NH_GIS, 
+                 merge(AN2_NOX_GIS, 
+                 merge(AN2_TP_GIS, 
+                 merge(AN2_FC_GIS,
+                      AN2_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "AN2") %>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+AN2_pH_temp_sf <- merge(AN2_Temp_GIS, AN2_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "AN2")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+AN2_SF<- left_join(x = AN2_most_sf, y = AN2_pH_temp_sf, by = c("Date", "Site"))
+AN2_SF[, 3:10][AN2_SF[, 3:10] == 0] <- 0.000001
+```
+
+AN4
+```{r}
+AN4_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("AN4")) %>% 
+             filter(Year %in% c(2008:2020))
+#GIS
+
+AN4_TN_GIS   <- WQV_time(df = AN4_SWAMP, WQV = "Total N (ug/L)", time = "all") %>% 
+                Add_all_dates( ) %>% 
+                rename(TN = WQV) 
+
+AN4_NH_GIS   <- WQV_time(AN4_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(NH = WQV)
+
+AN4_NOX_GIS  <- WQV_time(AN4_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV)
+
+AN4_TP_GIS   <- WQV_time(AN4_SWAMP, WQV = "UTP", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(TP = WQV)
+
+AN4_FC_GIS   <- WQV_time(AN4_SWAMP, WQV = "FC", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(FC = WQV) 
+
+AN4_Temp_GIS <- WQV_time(AN4_SWAMP, WQV = "Temp C", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
+
+AN4_pH_GIS   <- WQV_time(AN4_SWAMP, WQV = "pH", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
+
+AN4_TSS_GIS  <- WQV_time(AN4_SWAMP, WQV = "TSS (mg/L)", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
+
+AN4_most_gis <-   merge(AN4_TN_GIS, 
+             merge(AN4_NH_GIS, 
+             merge(AN4_NOX_GIS, 
+             merge(AN4_TP_GIS, 
+             merge(AN4_FC_GIS, 
+                   AN4_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(x = "-78.943002",
+                    y = "35.987457",
+                    Site = "AN4")
+
+AN4_pH_temp <- merge(AN4_Temp_GIS, AN4_pH_GIS, 
+               by = "Date") %>% 
+               mutate(x = "-78.943002",
+                      y = "35.987457",
+                      Site = "AN4")
+
+AN4_GIS<- left_join(x = AN4_most_gis, y =AN4_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+AN4_most_sf <-   merge(AN4_TN_GIS, 
+                 merge(AN4_NH_GIS, 
+                 merge(AN4_NOX_GIS, 
+                 merge(AN4_TP_GIS, 
+                 merge(AN4_FC_GIS,
+                      AN4_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "AN4") %>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+AN4_pH_temp_sf <- merge(AN4_Temp_GIS, AN4_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "AN4")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+AN4_SF<- left_join(x = AN4_most_sf, y = AN4_pH_temp_sf, by = c("Date", "Site"))
+AN4_SF[, 3:10][AN4_SF[, 3:10] == 0] <- 0.000001
+```
+
+AN5
+```{r}
+AN5_SWAMP <- SWAMP_data %>% 
+             filter(Site %in% c("AN5")) %>% 
+             filter(Year %in% c(2008:2020))
+#GIS
+
+AN5_TN_GIS   <- WQV_time(df = AN5_SWAMP, WQV = "Total N (ug/L)", time = "all") %>% 
+                Add_all_dates( ) %>% 
+                rename(TN = WQV) 
+
+AN5_NH_GIS   <- WQV_time(AN5_SWAMP, WQV = "NH4-N (ug/L)", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(NH = WQV)
+
+AN5_NOX_GIS  <- WQV_time(AN5_SWAMP, WQV = "NOX", time = "all")%>% 
+                Add_all_dates( ) %>% 
+                  rename(NOX = WQV)
+
+AN5_TP_GIS   <- WQV_time(AN5_SWAMP, WQV = "UTP", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(TP = WQV)
+
+AN5_FC_GIS   <- WQV_time(AN5_SWAMP, WQV = "FC", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(FC = WQV) 
+
+AN5_Temp_GIS <- WQV_time(AN5_SWAMP, WQV = "Temp C", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(Temp = WQV) 
+
+AN5_pH_GIS   <- WQV_time(AN5_SWAMP, WQV = "pH", time = "all")%>% 
+                  Add_all_dates( ) %>% 
+                  rename(pH = WQV) 
+
+AN5_TSS_GIS  <- WQV_time(AN5_SWAMP, WQV = "TSS (mg/L)", time = "all")%>%
+                  Add_all_dates( ) %>% 
+                  rename(TSS = WQV) 
+
+AN5_most_gis <-   merge(AN5_TN_GIS, 
+             merge(AN5_NH_GIS, 
+             merge(AN5_NOX_GIS, 
+             merge(AN5_TP_GIS, 
+             merge(AN5_FC_GIS, 
+                   AN5_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(x = "-78.943044",
+                    y = "35.987463",
+                    Site = "AN5")
+
+AN5_pH_temp <- merge(AN5_Temp_GIS, AN5_pH_GIS, 
+               by = "Date") %>% 
+               mutate(x = "-78.943044",
+                      y = "35.987463",
+                      Site = "AN5")
+
+AN5_GIS<- left_join(x = AN5_most_gis, y =AN5_pH_temp, by = c("Date", "Site", "x", "y"))
+
+#Data for shapefile
+AN5_most_sf <-   merge(AN5_TN_GIS, 
+                 merge(AN5_NH_GIS, 
+                 merge(AN5_NOX_GIS, 
+                 merge(AN5_TP_GIS, 
+                 merge(AN5_FC_GIS,
+                      AN5_TSS_GIS)))), 
+             by = "Date") %>% 
+             mutate(Site = "AN5") %>% 
+             dplyr::select("Date", "Site", "TN", "NH", "NOX", "TP", "FC", "TSS")
+
+AN5_pH_temp_sf <- merge(AN5_Temp_GIS, AN5_pH_GIS, 
+               by = "Date") %>% 
+             mutate(Site = "AN5")%>% 
+             dplyr::select("Date", "Site", "Temp", "pH")
+AN5_SF<- left_join(x = AN5_most_sf, y = AN5_pH_temp_sf, by = c("Date", "Site"))
+AN5_SF[, 3:10][AN5_SF[, 3:10] == 0] <- 0.000001
+```
 
 Convert DD coordinates to UTM
 ```{r}
@@ -366,6 +857,16 @@ WT5_GIS$x<-as.numeric(WT5_GIS$x)
 WT5_GIS$y<- as.numeric(WT5_GIS$y)
 P3D_GIS$x<-as.numeric(P3D_GIS$x)
 P3D_GIS$y<- as.numeric(P3D_GIS$y)
+P51_GIS$x<-as.numeric(P51_GIS$x)
+P51_GIS$y<- as.numeric(P51_GIS$y)
+P53_GIS$x<-as.numeric(P53_GIS$x)
+P53_GIS$y<- as.numeric(P53_GIS$y)
+AN2_GIS$x<-as.numeric(AN2_GIS$x)
+AN2_GIS$y<- as.numeric(AN2_GIS$y)
+AN4_GIS$x<-as.numeric(AN4_GIS$x)
+AN4_GIS$y<- as.numeric(AN4_GIS$y)
+AN5_GIS$x<-as.numeric(AN5_GIS$x)
+AN5_GIS$y<- as.numeric(AN5_GIS$y)
 
 #make x and y coordinate columns
 coordinates(WT1_GIS) <- c("x", "y")
@@ -373,6 +874,11 @@ coordinates(WT3_GIS) <- c("x", "y")
 coordinates(WT4_GIS) <- c("x", "y")
 coordinates(WT5_GIS) <- c("x", "y")
 coordinates(P3D_GIS) <- c("x", "y")
+coordinates(P51_GIS) <- c("x", "y")
+coordinates(P53_GIS) <- c("x", "y")
+coordinates(AN2_GIS) <- c("x", "y")
+coordinates(AN4_GIS) <- c("x", "y")
+coordinates(AN5_GIS) <- c("x", "y")
 
 #Set projection of the data, assuming WGS84 ellipsoid
 proj4string(WT1_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84") 
@@ -380,6 +886,11 @@ proj4string(WT3_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
 proj4string(WT4_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
 proj4string(WT5_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
 proj4string(P3D_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
+proj4string(P51_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
+proj4string(P53_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
+proj4string(AN2_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
+proj4string(AN4_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
+proj4string(AN5_GIS) <- CRS("+proj=longlat + ellps=WGS84 +datum=WGS84")
 
 #Transform to UTM
 WT1_GIS <-spTransform(WT1_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
@@ -387,6 +898,11 @@ WT3_GIS <-spTransform(WT3_GIS,CRS="+proj=utm +zone=17 +datum=WGS84")
 WT4_GIS <-spTransform(WT4_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
 WT5_GIS <-spTransform(WT5_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
 P3D_GIS <-spTransform(P3D_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
+P51_GIS <-spTransform(P51_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
+P53_GIS <-spTransform(P53_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
+AN2_GIS <-spTransform(AN2_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
+AN4_GIS <-spTransform(AN4_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
+AN5_GIS <-spTransform(AN5_GIS,CRS="+proj=utm +zone=17 +datum=WGS84") 
 
 #DataFrame of Data
 WT1_data <- as.data.frame(coordinates(WT1_GIS))
@@ -394,18 +910,33 @@ WT3_data <- as.data.frame(coordinates(WT3_GIS))
 WT4_data <- as.data.frame(coordinates(WT4_GIS))
 WT5_data <- as.data.frame(coordinates(WT5_GIS))
 P3D_data <- as.data.frame(coordinates(P3D_GIS))
+P51_data <- as.data.frame(coordinates(P51_GIS))
+P53_data <- as.data.frame(coordinates(P53_GIS))
+AN2_data <- as.data.frame(coordinates(AN2_GIS))
+AN4_data <- as.data.frame(coordinates(AN4_GIS))
+AN5_data <- as.data.frame(coordinates(AN5_GIS))
 
 #Create Shapefile for ArcGIS
-WT1.df = SpatialPointsDataFrame(WT1_GIS, data.frame(id=1:length(WT1_GIS), WT1_data))
-raster::shapefile(WT1.df, "WT1.shp")
-WT3.df = SpatialPointsDataFrame(WT3_GIS, data.frame(id=1:length(WT3_GIS), WT3_data))
-raster::shapefile(WT3.df, "WT3.shp")
-WT4.df = SpatialPointsDataFrame(WT4_GIS, data.frame(id=1:length(WT4_GIS), WT4_data))
-raster::shapefile(WT4.df, "WT4.shp")
-WT5.df = SpatialPointsDataFrame(WT5_GIS, data.frame(id=1:length(WT5_GIS), WT5_data))
-raster::shapefile(WT5.df, "WT5.shp")
-P3D.df = SpatialPointsDataFrame(P3D_GIS, data.frame(id=1:length(P3D_GIS), P3D_data))
-raster::shapefile(P3D.df, "P3D.shp")
+WT1.df = SpatialPointsDataFrame(WT1_GIS, data.frame(id=1:length(WT1_GIS), WT1_SF))
+raster::shapefile(WT1.df, "WT1.shp", overwrite = TRUE)
+WT3.df = SpatialPointsDataFrame(WT3_GIS, data.frame(id=1:length(WT3_GIS), WT3_SF))
+raster::shapefile(WT3.df, "WT3.shp", overwrite = TRUE)
+WT4.df = SpatialPointsDataFrame(WT4_GIS, data.frame(id=1:length(WT4_GIS), WT4_SF))
+raster::shapefile(WT4.df, "WT4.shp", overwrite = TRUE)
+WT5.df = SpatialPointsDataFrame(WT5_GIS, data.frame(id=1:length(WT5_GIS), WT5_SF))
+raster::shapefile(WT5.df, "WT5.shp", overwrite = TRUE)
+P3D.df = SpatialPointsDataFrame(P3D_GIS, data.frame(id=1:length(P3D_GIS), P3D_SF))
+raster::shapefile(P3D.df, "P3D.shp", overwrite = TRUE)
+P51.df = SpatialPointsDataFrame(P51_GIS, data.frame(id=1:length(P51_GIS), P51_SF))
+raster::shapefile(P51.df, "P51.shp", overwrite = TRUE)
+P53.df = SpatialPointsDataFrame(P53_GIS, data.frame(id=1:length(P53_GIS), P53_SF))
+raster::shapefile(P53.df, "P53.shp", overwrite = TRUE)
+AN2.df = SpatialPointsDataFrame(AN2_GIS, data.frame(id=1:length(AN2_GIS), AN2_SF))
+raster::shapefile(AN2.df, "AN2.shp", overwrite = TRUE)
+AN4.df = SpatialPointsDataFrame(AN4_GIS, data.frame(id=1:length(AN4_GIS), AN4_SF))
+raster::shapefile(AN4.df, "AN4.shp", overwrite = TRUE)
+AN5.df = SpatialPointsDataFrame(AN5_GIS, data.frame(id=1:length(AN5_GIS), AN5_SF))
+raster::shapefile(AN5.df, "AN5.shp", overwrite = TRUE)
 ```
 
 

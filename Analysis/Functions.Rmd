@@ -13,13 +13,105 @@ pacman::p_load(ggpubr, ggplot2, readxl, tidyverse, dplyr, lubridate, here, pkgco
                trend, zoo, Kendall)
 ```
 
-Upload Data
+Oli's function
 ```{r}
-Nitrogen             <- read_excel(here("Data/Nitrogen.xlsx"))
-Phosphorus           <- read_excel(here("Data/Phosphorus.xlsx"))
-TotalSuspendedSolids <- read_excel(here("Data/TotalSuspendedSolids.xlsx"))
-YSI                  <- read_excel(here("Data/YSI.xlsx"))
-FecalColiform        <- read_excel(here("Data/FecalColiform.xlsx"))
+# e.g. df = TN_model1
+averageValue <- function(df, WQV) {
+  days = seq(min(df$Date), max(df$Date), "days")
+
+  data = left_join(data.frame(Date = days), df, by="Date")
+
+if (WQV == "TN") {
+  Model_TN <- lm(data = data, formula = (log(`Total N (ug/L)` ) ~ poly(Date, 10) + Site - 1))
+
+  #plot(data[data$Date %in% df$Date, "Date"], predict(Model_TN))
+
+  coefs = coef(Model_TN)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_TN)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+  
+if (WQV == "TP") {
+    Model_TP <- lm(data = data, formula = (log(`UTP` ) ~ poly(Date, 10) + Site - 1))
+
+  coefs = coef(Model_TP)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_TP)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+  
+if (WQV == "FC") {
+  Model_FC <- lm(data = data, formula = (log(`FC` ) ~ poly(Date, 10) + Site - 1))
+
+  coefs = coef(Model_FC)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_FC)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+
+if (WQV == "NH"){
+  Model_NH <- lm(data = data, formula = (log(`NH4-N (ug/L)` ) ~ poly(Date, 10) + Site - 1))
+
+  coefs = coef(Model_NH)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_NH)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+
+if (WQV == "NOX") {
+  Model_NOX <- lm(data = data, formula = (log(`NOX` ) ~ poly(Date, 10) + Site - 1))
+
+  coefs = coef(Model_NOX)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_NOX)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+
+if (WQV == "ph"){
+  Model_pH <- lm(data = data, formula = ((`pH` ) ~ poly(Date, 10) + Site - 1))
+
+  coefs = coef(Model_pH)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_pH)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+  
+if (WQV == "TSS") {
+  Model_TSS <- lm(data = data, formula = (log(`TSS (mg/L)` ) ~ poly(Date, 10) + Site - 1))
+
+  coefs = coef(Model_TSS)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_TSS)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+  
+if (WQV == "Temp"){
+  Model_Temp <- lm(data = data, formula = (log(`Temp C` ) ~ poly(Date, 10) + Site - 1))
+
+  coefs = coef(Model_Temp)
+  coefs = coefs[11:length(coefs)] # remove coefficients for Date
+  CI = confint(Model_Temp)
+  CI = CI[11:nrow(CI), ]
+  
+C  <-cbind(CI, estimate=coefs)
+return(C)}
+}
+
 ```
 
 Fix Date Function
@@ -30,6 +122,24 @@ fix_day <- Vectorize(
               if (day %in% 1:9) 
               return(paste0("0", day))
               return(day) })
+
+```
+
+```{r}
+Add_all_dates <- function(df) {  
+  df1 <-aggregate(WQV ~ Date, df, mean)
+#Daily
+OrderedDates1 <- df1[rev(order(as.Date(df1$Date))),]
+
+start_date1 <- date(last(OrderedDates1$Date))
+end_date1 <- date(first(OrderedDates1$Date))
+
+days  <- as.data.frame( x = seq(start_date1, end_date1, "day")) %>% 
+  set_names(c("Date"))
+
+JoinDates1      <- left_join(x = days, y = df1) 
+
+return(JoinDates1)}
 
 ```
 
@@ -56,12 +166,25 @@ WQV_time <- function(df, WQV, time) {
               return(day) })
     #Process data
     df1  <- df %>% 
-            select(any_of(c("Total N (ug/L)", "TN", "NH", "NH4-N (ug/L)", "NOX", "UTP", "TP", "FC", "pH", "Temp C", "TSS (mg/L)", "TSS", "Month", "Day", "Year", "Site")))
+            dplyr::select(any_of(c("Total N (ug/L)", "TN", "NH", "NH4-N (ug/L)", "NOX", "UTP", "TP", "FC", "pH", "Temp C", "TSS (mg/L)", "TSS", "Month", "Day", "Year", "Site")))
     #Sort data for only WQV of interest
     df1 <- df1 %>% 
-           select(`Site`, `Day`,`Month`, `Year`, `WQV`) %>% 
+           dplyr::select(`Site`, `Day`,`Month`, `Year`, `WQV`) %>% 
            na.omit() %>% 
            mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-")))
+
+if (time == "all")  {
+  #Select Site, Date, WQV
+  df5 <-  df1 %>% 
+    dplyr::select(`Site`, `Date`, `WQV`)
+    #Rename columns
+    oldnames5<-c(colnames(df5))
+    newnames5<-c("Site", "Date" , "WQV")
+    df6 <- df5 %>% 
+           rename_at(vars(oldnames5), ~ newnames5)
+return(df6)
+}
+    
   
 if (time == "day") {
   #Determine daily mean                
@@ -120,7 +243,7 @@ Fix_Missing_Data <- function(df, time) {
   #Daily
   df1 <- df %>% ungroup() %>% 
                 mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-                select(`Date`, Daily.Mean) %>% 
+                dplyr::select(`Date`, Daily.Mean) %>% 
                 na.omit() 
   
 OrderedDates1 <- df1[rev(order(as.Date(df1$Date))),]
@@ -136,7 +259,7 @@ JoinDates1      <- left_join(x = days, y = df1)
 # Adding new column with no missing obs
 df1 <- JoinDates1 %>% 
               mutate( Clean.Daily.Mean = zoo::na.approx(Daily.Mean) ) %>% 
-              select(Date, Clean.Daily.Mean)
+              dplyr::select(Date, Clean.Daily.Mean)
 return(df1)}
 
 if (time == "month") {
@@ -144,7 +267,7 @@ if (time == "month") {
     df2 <- df %>% ungroup() %>%
               mutate(Day = 1) %>% 
               mutate(Date = ydm(paste0(Year, fix_day(Day), Month, sep="-"))) %>% 
-              select(Date, Monthly.Mean) %>% 
+              dplyr::select(Date, Monthly.Mean) %>% 
               na.omit() 
   
 OrderedDates2 <- df2[rev(order(as.Date(df2$Date))),]
@@ -160,7 +283,7 @@ JoinDates2      <- left_join(x = months, y = df2)
 # Adding new column with no missing obs
 df2 <- JoinDates2 %>% 
               mutate( Clean.Monthly.Mean = zoo::na.approx(Monthly.Mean) ) %>% 
-              select(Date, Clean.Monthly.Mean)
+              dplyr::select(Date, Clean.Monthly.Mean)
 return(df2) }
    
   else {print("input time as day or month")}}
